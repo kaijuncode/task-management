@@ -1,0 +1,144 @@
+import java.util.Optional;
+
+import javafx.application.Application;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
+import javafx.scene.Scene;
+import javafx.scene.control.*;
+import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.GridPane;
+import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
+import javafx.scene.text.Font;
+import javafx.stage.Stage;
+
+public class mainpage extends Application{ 
+    @Override
+    public void start(Stage stage){
+        BorderPane mainpage = new BorderPane();
+
+        //Menu
+        //Task Menu Item
+        MenuItem post = new MenuItem("Post Task");
+        MenuItem transfer = new MenuItem("Transfer Task");
+
+        //Help Menu Item
+        MenuItem about = new MenuItem("About");
+        MenuItem logout = new MenuItem("Logout");
+        MenuItem exit = new MenuItem("Exit");
+
+        Menu taskMenu = new Menu("Task");
+        taskMenu.getItems().addAll(post, transfer);
+        Menu helpMenu = new Menu("Help");
+        helpMenu.getItems().addAll(about,logout,exit);
+
+        MenuBar menu = new MenuBar();
+        menu.getMenus().addAll(taskMenu, helpMenu);
+
+        //Post Task Page
+        posttaskpage posttaskPage = new posttaskpage();
+        post.setOnAction(e ->{
+            Stage newStage = new Stage();
+            posttaskPage.start(newStage);
+        });
+
+        //About Page
+        aboutpage aboutPage = new aboutpage(); 
+        about.setOnAction(e ->{
+            Stage newStage = new Stage();
+            aboutPage.start(newStage);
+        });
+
+        //Logout
+        loginpage loginPage = new loginpage();
+        logout.setOnAction(e ->{
+            Alert LOGOUT = new Alert(Alert.AlertType.CONFIRMATION);
+            LOGOUT.setTitle("LOGOUT");
+            LOGOUT.setHeaderText("Logout?");
+            LOGOUT.setContentText("Click OK will go back Login Page.");
+
+            Optional<ButtonType> result = LOGOUT.showAndWait();
+
+            if (result.isPresent() && result.get() == ButtonType.OK){
+                stage.close();
+                Stage newStage = new Stage();
+                loginPage.start(newStage);
+            }
+        });
+
+        //EXIT
+        exit.setOnAction(e ->{
+            Alert EXIT = new Alert(Alert.AlertType.CONFIRMATION);
+            EXIT.setTitle("EXIT");
+            EXIT.setHeaderText("Exit?");
+            EXIT.setContentText("Click OK will close this application.");
+
+            Optional<ButtonType> result = EXIT.showAndWait();
+
+            if (result.isPresent() && result.get() == ButtonType.OK){
+                System.exit(0);
+            }
+        });
+
+        //Center Area - Pending Case
+        VBox container = new VBox();
+        container.setSpacing(10);
+
+        int j = 0;
+        for (int i = 1; i <= 50; i++){
+            GridPane itemGrid = new GridPane();
+            itemGrid.setStyle("-fx-background-color: #ffffff; -fx-border-color: #cccccc; -fx-padding: 10;");
+            itemGrid.add(new Label("ID: " + i), 0, 0);
+            itemGrid.add(new Label("Pending"), 0, 1);
+
+            container.getChildren().add(itemGrid);
+            j++;
+        };
+
+        ScrollPane scroll = new ScrollPane();
+        scroll.setContent(container);
+
+        scroll.setFitToWidth(true);
+        scroll.setPannable(true);
+
+        //Testing Right
+        GridPane right = new GridPane();
+        right.setHgap(10);
+        right.setVgap(10);
+        right.setPadding(new Insets(10));
+
+        right.add(new Label("Testing"), 0, 0);
+
+        //Testing Left
+        GridPane left = new GridPane();
+        left.setHgap(10);
+        left.setVgap(10);
+        left.setPadding(new Insets(10));
+
+        left.add(new Label("Testing"), 0, 0);
+
+        //Testing Bottom
+        GridPane bottom = new GridPane();
+        bottom.setHgap(10);
+        bottom.setVgap(10);
+        bottom.setAlignment(Pos.CENTER);
+
+        Label pending = new Label("Pending Case Amount: " + j);
+        pending.setFont(new Font("Times New Roman", 16));
+        bottom.add(pending, 0, 0);
+
+        mainpage.setTop(menu);
+        mainpage.setCenter(scroll);
+        mainpage.setRight(right);
+        mainpage.setLeft(left);
+        mainpage.setBottom(bottom);
+
+        Scene scene = new Scene(mainpage, 800, 600);
+        stage.setTitle("Task Management System");
+        stage.setScene(scene);
+        stage.show();
+    }
+    public static void main(String[] args) {
+        launch();
+    }
+}
