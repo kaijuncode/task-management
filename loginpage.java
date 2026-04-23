@@ -8,8 +8,12 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+
 public class loginpage extends Application{
-    public String username = "KaiJun";
     @Override
     public void start(Stage stage){
         GridPane loginpage = new GridPane();
@@ -39,12 +43,20 @@ public class loginpage extends Application{
             new Thread(() ->{
                 try{
                     FirebaseAuthService auth = new FirebaseAuthService();
-                    String result = auth.login(email, password);
+                    AuthResult result = auth.login(email, password);
+
+                    ProfileService profileService = new ProfileService();
+                    boolean hasProfile = profileService.checkUserProfile(result.Uid, result.idToken);
 
                     Platform.runLater(() ->{
                         stage.close();
-                        Stage newStage = new Stage();
-                        otherPage.start(newStage);
+                        
+                        if (hasProfile){
+                            Stage newStage = new Stage();
+                            otherPage.start(newStage);
+                        } else {
+                            showCreateProfilePage(result);
+                        }
                     });
                 } catch (Exception e){
                     Platform.runLater(() ->{
@@ -66,6 +78,71 @@ public class loginpage extends Application{
         stage.setTitle("Login");
         stage.setScene(scene);
         stage.show();
+    }
+
+    private void showCreateProfilePage(AuthResult authResult){
+        Stage stage = new Stage();
+
+        GridPane profile = new GridPane();
+        profile.setHgap(10);
+        profile.setVgap(10);
+        profile.setAlignment(Pos.CENTER);
+
+        TextField nameInput = new TextField();
+
+        profile.add(new Label("Name:"), 0, 0);
+        profile.add(nameInput, 1, 0);
+
+        Button saveBtn = new Button("Save");
+        profile.add(saveBtn, 0, 1, 2, 1);
+
+        saveBtn.setOnAction(e ->{
+            new Thread(() ->{
+                try{
+                    createProfile(
+                        authResult.Uid,
+                        authResult.idToken,
+                        authResult.email,
+                        nameInput.getText()
+                    );
+
+                    Platform.runLater(() ->{
+                        stage.close();
+
+                        Stage main = new Stage();
+                        new mainpage().start(main);
+                    });
+                } catch (Exception ex){
+                    ex.printStackTrace();
+                }
+            }).start();
+        });
+
+        Scene scene = new Scene(profile, 300, 200);
+        stage.setTitle("Create Profile");
+        stage.setScene(scene);
+        stage.show();
+    }
+
+    public void createProfile(String uid, String idToken, String email, String name) throws Exception{
+        String projectID = "task-management-86056";
+        String url = "https://firestore.googleapis.com/v1/projects/"
+                + projectID + "/databases/task/documents/users/" + uid;
+
+        String json = "{ \"fields\": { " +
+                "\"email\": { \"stringValue\": \"" + email + "\" }, " +
+                "\"name\": { \"stringValue\": \"" + name + "\" } " +
+                "} }";
+
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(url))
+                .method("PATCH", HttpRequest.BodyPublishers.ofString(json))
+                .header("Content-Type", "application/json")
+                .header("Authorization","Bearer " + idToken)
+                .build();
+
+        HttpClient client = HttpClient.newHttpClient();
+        client.send(request, HttpResponse.BodyHandlers.ofString());
     }
     public static void main(String[] args) {
         launch();
