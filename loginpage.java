@@ -30,13 +30,12 @@ public class loginpage extends Application{
         loginpage.add(new Label("Password"), 0, 1);
         PasswordField passwordInt = new PasswordField();
         loginpage.add(passwordInt, 1, 1);
-
-        mainpage otherPage = new mainpage();
         
         //Login Button
         Button loginBtn = new Button("Login");
         loginpage.add(loginBtn, 0, 2, 2, 1);
         loginBtn.setOnAction(event ->{
+            loginBtn.setDisable(true);
             String email = usernameInt.getText();
             String password = passwordInt.getText();
 
@@ -52,6 +51,7 @@ public class loginpage extends Application{
                         stage.close();
                         
                         if (hasProfile){
+                            mainpage otherPage = new mainpage(result.Uid, result.idToken);
                             Stage newStage = new Stage();
                             otherPage.start(newStage);
                         } else {
@@ -62,6 +62,7 @@ public class loginpage extends Application{
                     Platform.runLater(() ->{
                         usernameInt.setText("");
                         passwordInt.setText("");
+                        loginBtn.setDisable(false);
 
                         Alert loginAlert = new Alert(Alert.AlertType.WARNING);
                         loginAlert.setTitle("Login Failed");
@@ -109,8 +110,9 @@ public class loginpage extends Application{
                     Platform.runLater(() ->{
                         stage.close();
 
+                        mainpage otherPage = new mainpage(authResult.Uid, authResult.idToken);
                         Stage main = new Stage();
-                        new mainpage().start(main);
+                        otherPage.start(main);
                     });
                 } catch (Exception ex){
                     ex.printStackTrace();

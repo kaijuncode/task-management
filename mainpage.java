@@ -1,6 +1,9 @@
 import java.util.Optional;
 
+import com.google.gson.*;
+
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -12,7 +15,17 @@ import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.stage.Stage;
 
+import java.net.URI;
+import java.net.http.*;
+
 public class mainpage extends Application{ 
+    private String uid;
+    private String idToken;
+
+    public mainpage(String uid, String idToken) {
+        this.uid = uid;
+        this.idToken = idToken;
+    }
     @Override
     public void start(Stage stage){
         BorderPane mainpage = new BorderPane();
@@ -107,7 +120,19 @@ public class mainpage extends Application{
         right.setVgap(10);
         right.setPadding(new Insets(10));
 
-        right.add(new Label("Testing"), 0, 0);
+        Label nameLabel = new Label("Loading...");
+        right.add(nameLabel, 0, 0);
+        new Thread(() ->{
+            try{
+                String name = getProfileName();
+
+                Platform.runLater(() ->{
+                    nameLabel.setText(name);
+                });
+            } catch (Exception e){
+                nameLabel.setText("Error");
+            }
+        }).start();
 
         //Testing Left
         GridPane left = new GridPane();
@@ -133,10 +158,42 @@ public class mainpage extends Application{
         mainpage.setLeft(left);
         mainpage.setBottom(bottom);
 
-        Scene scene = new Scene(mainpage, 800, 600);
+        Scene scene = new Scene(mainpage, 1000, 600);
         stage.setTitle("Task Management System");
         stage.setScene(scene);
         stage.show();
+    }
+
+    public String getProfileName() throws Exception {
+        String projectID = "task-management-86056";
+
+        String url = "https://firestore.googleapis.com/v1/projects/"
+                + projectID + "/databases/task/documents/users/" + uid;
+
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(url))
+                .GET()
+                .header("Authorization", "Bearer " + idToken)
+                .build();
+
+        HttpClient client = HttpClient.newHttpClient();
+        HttpResponse<String> respond = client.send(request, HttpResponse.BodyHandlers.ofString());
+
+        if (respond.statusCode() == 200){
+            return extractName(respond.body());
+        }
+        else{
+            throw new RuntimeException("Failed to get profile: ");
+        }
+    }
+
+    public String extractName(String json){
+        JsonObject root = JsonParser.parseString(json).getAsJsonObject();
+
+        return root.getAsJsonObject("fields")
+                .getAsJsonObject("name")
+                .get("stringValue")
+                .getAsString();
     }
     public static void main(String[] args) {
         launch();
