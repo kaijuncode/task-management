@@ -36,6 +36,8 @@ public class loginpage extends Application{
         loginpage.add(loginBtn, 0, 2, 2, 1);
         loginBtn.setOnAction(event ->{
             loginBtn.setDisable(true);
+            usernameInt.setDisable(true);
+            passwordInt.setDisable(true);
             String email = usernameInt.getText();
             String password = passwordInt.getText();
 
@@ -62,6 +64,8 @@ public class loginpage extends Application{
                     Platform.runLater(() ->{
                         usernameInt.setText("");
                         passwordInt.setText("");
+                        usernameInt.setDisable(false);
+                        passwordInt.setDisable(false);
                         loginBtn.setDisable(false);
 
                         Alert loginAlert = new Alert(Alert.AlertType.WARNING);
