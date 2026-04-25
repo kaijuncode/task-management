@@ -19,11 +19,11 @@ import java.net.URI;
 import java.net.http.*;
 
 public class mainpage extends Application{ 
-    private String uid;
+    private String Uid;
     private String idToken;
 
-    public mainpage(String uid, String idToken) {
-        this.uid = uid;
+    public mainpage(String Uid, String idToken) {
+        this.Uid = Uid;
         this.idToken = idToken;
     }
     @Override
@@ -120,11 +120,12 @@ public class mainpage extends Application{
         right.setVgap(10);
         right.setPadding(new Insets(10));
 
-        Label nameLabel = new Label("Loading...");
+        //UserName
+        Label nameLabel = new Label();
         right.add(nameLabel, 0, 0);
         new Thread(() ->{
             try{
-                String name = getProfileName();
+                String name = UserSession.getInstance().getName();
 
                 Platform.runLater(() ->{
                     nameLabel.setText(name);
@@ -133,6 +134,15 @@ public class mainpage extends Application{
                 nameLabel.setText("Error");
             }
         }).start();
+
+        //User Status
+        String setting = "Available";
+        Button setStatus = new Button("Status");
+        setStatus.setAlignment(Pos.CENTER);
+        right.add(setStatus, 0, 1);
+        setStatus.setOnAction(e-> {
+            showSetStatusPage(setting);
+        });
 
         //Testing Left
         GridPane left = new GridPane();
@@ -164,36 +174,24 @@ public class mainpage extends Application{
         stage.show();
     }
 
-    public String getProfileName() throws Exception {
-        String projectID = "task-management-86056";
+    public void showSetStatusPage(String setting){
+        Stage stage = new Stage();
 
-        String url = "https://firestore.googleapis.com/v1/projects/"
-                + projectID + "/databases/task/documents/users/" + uid;
+        GridPane status = new GridPane();
+        status.setHgap(10);
+        status.setVgap(10);
+        status.setPadding(new Insets(5));
 
-        HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(url))
-                .GET()
-                .header("Authorization", "Bearer " + idToken)
-                .build();
+        Button busy = new Button("busy");
+        status.add(busy, 0, 0);
+        busy.setOnAction(e-> {
+            stage.close();
+        });
 
-        HttpClient client = HttpClient.newHttpClient();
-        HttpResponse<String> respond = client.send(request, HttpResponse.BodyHandlers.ofString());
-
-        if (respond.statusCode() == 200){
-            return extractName(respond.body());
-        }
-        else{
-            throw new RuntimeException("Failed to get profile: ");
-        }
-    }
-
-    public String extractName(String json){
-        JsonObject root = JsonParser.parseString(json).getAsJsonObject();
-
-        return root.getAsJsonObject("fields")
-                .getAsJsonObject("name")
-                .get("stringValue")
-                .getAsString();
+        Scene scene = new Scene(status, 300, 200);
+        stage.setTitle("Set Status");
+        stage.setScene(scene);
+        stage.show();
     }
     public static void main(String[] args) {
         launch();

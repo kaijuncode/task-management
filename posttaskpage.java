@@ -51,6 +51,8 @@ public class posttaskpage extends Application {
         //PostBy
         gridpane.add(new Label("Post By:"), 2, 0);
         TextField Post = new TextField();
+        Post.setText(UserSession.getInstance().getName());
+        Post.setDisable(true);
         gridpane.add(Post, 3, 0);
 
         //Assigned To

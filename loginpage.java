@@ -13,6 +13,9 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+
 public class loginpage extends Application{
     @Override
     public void start(Stage stage){
@@ -46,20 +49,30 @@ public class loginpage extends Application{
                     FirebaseAuthService auth = new FirebaseAuthService();
                     AuthResult result = auth.login(email, password);
 
-                    ProfileService profileService = new ProfileService();
-                    boolean hasProfile = profileService.checkUserProfile(result.Uid, result.idToken);
+                    String name = null;
+                    try {
+                        name = getProfileName(result.Uid, result.idToken);
+                    } catch (Exception e) {
+                        name = null;
+                    }
 
-                    Platform.runLater(() ->{
-                        stage.close();
-                        
-                        if (hasProfile){
+                    UserSession session = UserSession.getInstance();
+                    session.setUid(result.Uid);
+                    session.setidToken(result.idToken);
+                    session.setEmail(result.email);
+
+                    if (name != null){
+                        session.setName(name);
+                        Platform.runLater(() ->{
+                            stage.close();
                             mainpage otherPage = new mainpage(result.Uid, result.idToken);
                             Stage newStage = new Stage();
                             otherPage.start(newStage);
-                        } else {
-                            showCreateProfilePage(result);
-                        }
-                    });
+                        });
+                    }
+                    else{
+                        showCreateProfilePage(result);
+                    }
                 } catch (Exception e){
                     Platform.runLater(() ->{
                         usernameInt.setText("");
@@ -101,7 +114,21 @@ public class loginpage extends Application{
         Button saveBtn = new Button("Save");
         profile.add(saveBtn, 0, 1, 2, 1);
 
+        UserSession session = UserSession.getInstance();
+        session.setUid(authResult.Uid);
+        session.setidToken(authResult.idToken);
+        session.setEmail(authResult.email);
+
         saveBtn.setOnAction(e ->{
+            if (nameInput.getText().isEmpty()){
+                Alert alert = new Alert(Alert.AlertType.WARNING);
+                alert.setTitle("Validation Error");
+                alert.setHeaderText("Name Required");
+                alert.setContentText("Please enter your name to create profile.");
+
+                alert.showAndWait();
+                return;
+            }
             new Thread(() ->{
                 try{
                     createProfile(
@@ -111,6 +138,7 @@ public class loginpage extends Application{
                         nameInput.getText()
                     );
 
+                    session.setName(nameInput.getText());
                     Platform.runLater(() ->{
                         stage.close();
 
@@ -149,6 +177,38 @@ public class loginpage extends Application{
 
         HttpClient client = HttpClient.newHttpClient();
         client.send(request, HttpResponse.BodyHandlers.ofString());
+    }
+
+    public String getProfileName(String uid, String idToken) throws Exception {
+        String projectID = "task-management-86056";
+
+        String url = "https://firestore.googleapis.com/v1/projects/"
+                + projectID + "/databases/task/documents/users/" + uid;
+
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(url))
+                .GET()
+                .header("Authorization", "Bearer " + idToken)
+                .build();
+
+        HttpClient client = HttpClient.newHttpClient();
+        HttpResponse<String> respond = client.send(request, HttpResponse.BodyHandlers.ofString());
+
+        if (respond.statusCode() == 200){
+            return extractName(respond.body());
+        }
+        else{
+            throw new RuntimeException("Failed to get profile: ");
+        }
+    }
+
+    public String extractName(String json){
+        JsonObject root = JsonParser.parseString(json).getAsJsonObject();
+
+        return root.getAsJsonObject("fields")
+                .getAsJsonObject("name")
+                .get("stringValue")
+                .getAsString();
     }
     public static void main(String[] args) {
         launch();

@@ -1,7 +1,7 @@
 {
     "java.debug.settings.onBuildFailureProceed": true,
     "java.project.referencedLibraries": [
-    "C:/javafx-sdk-21.0.10/lib/**/*.jar",
-    "lib/**/*.jar"
+    "lib/**/*.jar",
+    "lib/javafx-sdk-21.0.10/lib/**/*.jar"
 ]
 }
