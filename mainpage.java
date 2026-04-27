@@ -19,13 +19,6 @@ import java.net.URI;
 import java.net.http.*;
 
 public class mainpage extends Application{ 
-    private String Uid;
-    private String idToken;
-
-    public mainpage(String Uid, String idToken) {
-        this.Uid = Uid;
-        this.idToken = idToken;
-    }
     @Override
     public void start(Stage stage){
         BorderPane mainpage = new BorderPane();
@@ -135,15 +128,6 @@ public class mainpage extends Application{
             }
         }).start();
 
-        //User Status
-        String setting = "Available";
-        Button setStatus = new Button("Status");
-        setStatus.setAlignment(Pos.CENTER);
-        right.add(setStatus, 0, 1);
-        setStatus.setOnAction(e-> {
-            showSetStatusPage(setting);
-        });
-
         //Testing Left
         GridPane left = new GridPane();
         left.setHgap(10);
@@ -170,26 +154,6 @@ public class mainpage extends Application{
 
         Scene scene = new Scene(mainpage, 1000, 600);
         stage.setTitle("Task Management System");
-        stage.setScene(scene);
-        stage.show();
-    }
-
-    public void showSetStatusPage(String setting){
-        Stage stage = new Stage();
-
-        GridPane status = new GridPane();
-        status.setHgap(10);
-        status.setVgap(10);
-        status.setPadding(new Insets(5));
-
-        Button busy = new Button("busy");
-        status.add(busy, 0, 0);
-        busy.setOnAction(e-> {
-            stage.close();
-        });
-
-        Scene scene = new Scene(status, 300, 200);
-        stage.setTitle("Set Status");
         stage.setScene(scene);
         stage.show();
     }

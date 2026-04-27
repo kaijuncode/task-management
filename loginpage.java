@@ -65,13 +65,16 @@ public class loginpage extends Application{
                         session.setName(name);
                         Platform.runLater(() ->{
                             stage.close();
-                            mainpage otherPage = new mainpage(result.Uid, result.idToken);
+                            mainpage otherPage = new mainpage();
                             Stage newStage = new Stage();
                             otherPage.start(newStage);
                         });
                     }
                     else{
-                        showCreateProfilePage(result);
+                        Platform.runLater(() ->{
+                            stage.close();
+                            showCreateProfilePage(result);
+                        });
                     }
                 } catch (Exception e){
                     Platform.runLater(() ->{
@@ -120,6 +123,8 @@ public class loginpage extends Application{
         session.setEmail(authResult.email);
 
         saveBtn.setOnAction(e ->{
+            nameInput.setDisable(true);
+            saveBtn.setDisable(true);
             if (nameInput.getText().isEmpty()){
                 Alert alert = new Alert(Alert.AlertType.WARNING);
                 alert.setTitle("Validation Error");
@@ -127,6 +132,8 @@ public class loginpage extends Application{
                 alert.setContentText("Please enter your name to create profile.");
 
                 alert.showAndWait();
+                nameInput.setDisable(false);
+                saveBtn.setDisable(false);
                 return;
             }
             new Thread(() ->{
@@ -142,7 +149,7 @@ public class loginpage extends Application{
                     Platform.runLater(() ->{
                         stage.close();
 
-                        mainpage otherPage = new mainpage(authResult.Uid, authResult.idToken);
+                        mainpage otherPage = new mainpage();
                         Stage main = new Stage();
                         otherPage.start(main);
                     });
@@ -198,7 +205,7 @@ public class loginpage extends Application{
             return extractName(respond.body());
         }
         else{
-            throw new RuntimeException("Failed to get profile: ");
+            throw new RuntimeException();
         }
     }
 
