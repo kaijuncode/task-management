@@ -1,13 +1,18 @@
-import java.util.Optional;
+import java.util.*;
+import java.time.*;
+import javafx.util.Duration;
 
 import com.google.gson.*;
 
+import javafx.animation.KeyFrame;
+import javafx.animation.Timeline;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.VBox;
@@ -87,35 +92,70 @@ public class mainpage extends Application{
         });
 
         //Center Area - Pending Case
-        VBox container = new VBox();
-        container.setSpacing(10);
+        ListView<Task> table = new ListView<>();
+        table.setSelectionModel(null);
+        table.setFocusTraversable(false);
 
-        int j = 0;
-        for (int i = 1; i <= 50; i++){
-            GridPane itemGrid = new GridPane();
-            itemGrid.setStyle("-fx-background-color: #ffffff; -fx-border-color: #cccccc; -fx-padding: 10;");
-            itemGrid.add(new Label("ID: " + i), 0, 0);
-            itemGrid.add(new Label("Pending"), 0, 1);
+        table.setCellFactory(param -> new ListCell<Task>(){
+            @Override
+            protected void updateItem(Task task, boolean empty){
+                super.updateItem(task, empty);
 
-            container.getChildren().add(itemGrid);
-            j++;
-        };
+                if (empty || task == null){
+                    setGraphic(null);
+                    return;
+                } 
+                
+                else {
+                    GridPane card = new GridPane();
+                    card.setHgap(10);
+                    card.setVgap(5);
+                    card.setPadding(new Insets(10));
 
-        ScrollPane scroll = new ScrollPane();
-        scroll.setContent(container);
+                    card.setStyle(
+                        "-fx-background-color: #f5f5f5;" +
+                        "-fx-border-color: #ccc;" +
+                        "-fx-border-radius: 8;" +
+                        "-fx-background-radius: 8;"
+                    );
 
-        scroll.setFitToWidth(true);
-        scroll.setPannable(true);
+                    card.add(new Label("Company Name: " + task.getCompanyName()), 0, 0);
+                    card.add(new Label("Name: " + task.getCustomerName()), 0, 1);
+                    card.add(new Label("Contact Number: " + task.getContactNumber()), 1, 0);
+                    card.add(new Label("Software: " + task.getSoftware()), 1, 1);
 
-        //Testing Right
+                    if (task.isUrgent()){
+                        card.setStyle("-fx-background-color: #ffebee;");
+                    }
+
+                    setGraphic(card);
+
+                    setOnMouseClicked(e-> {
+                        new detailpage(task).start(new Stage());
+                    });
+                }
+            }
+        });
+
+        loadTasks(table);
+        Timeline refresh = new Timeline(
+        new KeyFrame(Duration.seconds(5), e -> {
+            loadTasks(table);
+            })
+        );
+        refresh.setCycleCount(Timeline.INDEFINITE);
+        refresh.play();
+
+        //Right Area
         GridPane right = new GridPane();
-        right.setHgap(10);
-        right.setVgap(10);
-        right.setPadding(new Insets(10));
+        VBox rightBox = new VBox();
+        rightBox.setSpacing(10);
+        rightBox.setAlignment(Pos.CENTER);
+        rightBox.setPrefWidth(100);
 
         //UserName
         Label nameLabel = new Label();
-        right.add(nameLabel, 0, 0);
+        nameLabel.setAlignment(Pos.CENTER);
         new Thread(() ->{
             try{
                 String name = UserSession.getInstance().getName();
@@ -128,35 +168,132 @@ public class mainpage extends Application{
             }
         }).start();
 
-        //Testing Left
+        //Status
+        Label statusLabel = new Label("Available");
+        statusLabel.setAlignment(Pos.CENTER);
+        Button statusBtn = new Button("Update Status");
+
+        nameLabel.setMaxWidth(rightBox.getPrefWidth());
+        statusLabel.setMaxWidth(rightBox.getPrefWidth());
+        statusBtn.setMaxWidth(rightBox.getPrefWidth());
+        rightBox.getChildren().addAll(nameLabel, statusLabel, statusBtn);
+        right.add(rightBox, 0, 0);
+
+        //Left Area
         GridPane left = new GridPane();
-        left.setHgap(10);
-        left.setVgap(10);
-        left.setPadding(new Insets(10));
+        VBox btnBox = new VBox();
+        btnBox.setSpacing(10);
+        btnBox.setAlignment(Pos.CENTER);
+        btnBox.setPrefWidth(100);
 
-        left.add(new Label("Testing"), 0, 0);
+        //Task Type Button
+        Button pendingBtn = new Button("Pending Task");
+        Button urgentBtn = new Button("Urgent Task");
+        Button mytaskBtn = new Button("My Task");
 
-        //Testing Bottom
+        pendingBtn.setMaxWidth(btnBox.getPrefWidth());
+        urgentBtn.setMaxWidth(btnBox.getPrefWidth());
+        mytaskBtn.setMaxWidth(btnBox.getPrefWidth());
+
+        btnBox.getChildren().addAll(pendingBtn, urgentBtn, mytaskBtn);
+        left.add(btnBox, 0, 0);
+        
+        pendingBtn.setOnAction(e-> {
+            mainpage.setCenter(table);
+        });
+
+        urgentBtn.setOnAction(e-> {
+            //mainpage.setCenter(scroll1);
+        });
+
+        mytaskBtn.setOnAction(e-> {
+            //mainpage.setCenter(mytaskTable);
+        });
+
+        //Bottom Area
         GridPane bottom = new GridPane();
         bottom.setHgap(10);
         bottom.setVgap(10);
         bottom.setAlignment(Pos.CENTER);
 
-        Label pending = new Label("Pending Case Amount: " + j);
+        //Case Calculation
+        Label pending = new Label("Pending Case Amount: ");
         pending.setFont(new Font("Times New Roman", 16));
         bottom.add(pending, 0, 0);
 
         mainpage.setTop(menu);
-        mainpage.setCenter(scroll);
+        mainpage.setCenter(table);
         mainpage.setRight(right);
         mainpage.setLeft(left);
         mainpage.setBottom(bottom);
 
-        Scene scene = new Scene(mainpage, 1000, 600);
+        Scene scene = new Scene(mainpage, 800, 600);
         stage.setTitle("Task Management System");
         stage.setScene(scene);
         stage.show();
     }
+
+    public void loadTasks(ListView<Task> table){
+        new Thread(() ->{
+            try{
+                String projectId = "task-management-86056";
+                String idToken = UserSession.getInstance().getidToken();
+
+                String url = "https://firestore.googleapis.com/v1/projects/" + projectId + "/databases/(default)/documents/tasks";
+
+                HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(url))
+                    .header("Authorization", "Bearer " + idToken)
+                    .GET()
+                    .build();
+                
+                HttpClient client = HttpClient.newHttpClient();
+                HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+
+                List<Task> tasks = new ArrayList<>();
+
+                if (response.statusCode() == 200){
+                    JsonObject root = JsonParser.parseString(response.body()).getAsJsonObject();
+
+                    if (root.has("documents")){
+                        JsonArray documents = root.getAsJsonArray("documents");
+
+                        for (JsonElement doc : documents){
+                            JsonObject fields = doc.getAsJsonObject().getAsJsonObject("fields");
+
+                            String companyName = getField(fields, "company");
+                            String customerName = getField(fields, "customer");
+                            String contactNumber = getField(fields, "contact");
+                            String software = getField(fields, "software");
+                            String issue = getField(fields, "issue");
+                            String postBy = getField(fields, "postBy");
+                            String assignedTo = getField(fields, "assignedTo");
+                            String method = getField(fields, "method");
+                            String email = getField(fields, "emailVal");
+                            boolean urgent = fields.has("urgent") && fields.getAsJsonObject("urgent").get("booleanValue").getAsBoolean();
+                            String createTime = getField(fields, "createTime");
+                            String status = getField(fields, "status");
+
+                            Task task = new Task(companyName, customerName, contactNumber, software, issue, postBy, assignedTo, method, email, urgent, createTime, status);
+                            tasks.add(task);
+                        }
+                    }
+                }
+                Platform.runLater(() ->{
+                    table.getItems().setAll(tasks);
+                });
+            } catch (Exception e){
+                e.printStackTrace();
+            }
+        }).start();
+    }
+
+    private String getField(JsonObject fields, String key){
+    if (fields.has(key)){
+        return fields.getAsJsonObject(key).get("stringValue").getAsString();
+    }
+    return "";
+}
     public static void main(String[] args) {
         launch();
     }

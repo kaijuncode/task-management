@@ -168,7 +168,7 @@ public class loginpage extends Application{
     public void createProfile(String uid, String idToken, String email, String name) throws Exception{
         String projectID = "task-management-86056";
         String url = "https://firestore.googleapis.com/v1/projects/"
-                + projectID + "/databases/task/documents/users/" + uid;
+                + projectID + "/databases/(default)/documents/users/" + uid;
 
         String json = "{ \"fields\": { " +
                 "\"email\": { \"stringValue\": \"" + email + "\" }, " +
@@ -190,7 +190,7 @@ public class loginpage extends Application{
         String projectID = "task-management-86056";
 
         String url = "https://firestore.googleapis.com/v1/projects/"
-                + projectID + "/databases/task/documents/users/" + uid;
+                + projectID + "/databases/(default)/documents/users/" + uid;
 
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(url))

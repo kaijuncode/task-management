@@ -8,7 +8,7 @@ public class ProfileService {
         String projectId = "task-management-86056";
 
         String url = "https://firestore.googleapis.com/v1/projects/"
-                + projectId + "/databases/task/documents/users/" + uid;
+                + projectId + "/databases/(default)/documents/users/" + uid;
 
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(url))
