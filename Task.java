@@ -1,4 +1,8 @@
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+
 public class Task {
+    private String id;
     private String companyName;
     private String customerName;
     private String contactNumber;
@@ -12,7 +16,8 @@ public class Task {
     private String createTime;
     private String status;
 
-    public Task(String companyName, String customerName, String contactNumber, String software, String issue, String postBy, String assignedTo, String method, String email, boolean urgent, String createTime, String status) {
+    public Task(String id, String companyName, String customerName, String contactNumber, String software, String issue, String postBy, String assignedTo, String method, String email, boolean urgent, String createTime, String status) {
+        this.id = id;
         this.companyName = companyName;
         this.customerName = customerName;
         this.contactNumber = contactNumber;
@@ -25,6 +30,10 @@ public class Task {
         this.urgent = urgent;
         this.createTime = createTime;
         this.status = status;
+    }
+
+    public String getId() {
+        return id;
     }
 
     public String getCompanyName() {
@@ -74,4 +83,20 @@ public class Task {
     public String getStatus() {
         return status;
     }
+
+    public LocalDateTime getCreateDateTime() {
+        try {
+            if (createTime == null || createTime.isEmpty()) {
+                return null;
+            }
+
+            DateTimeFormatter formatter =
+                DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+
+            return LocalDateTime.parse(createTime, formatter);
+
+        } catch (Exception e) {
+            return null;
+        }
+    } 
 }

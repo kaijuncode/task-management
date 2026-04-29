@@ -6,6 +6,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import javafx.application.Application;
 import javafx.application.Platform;
@@ -13,6 +14,7 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.control.Alert.AlertType;
 import javafx.stage.Stage;
 import javafx.scene.image.*;
 import javafx.scene.layout.*;
@@ -93,10 +95,142 @@ public class detailpage extends Application{
         gridpane.add(new Label("Created Time:"), 2, 4);
         gridpane.add(new Label(task.getCreateTime()), 3, 4);
 
+        //Box for Accept and Assign Button
+        HBox btnBox = new HBox(10);
+
+        //Accept Task
+        Button accept = new Button("Accept");
+        accept.setVisible(false);
+        if (task.getAssignedTo().equals("Everyone")) {
+            accept.setVisible(true);
+        }
+        accept.setOnAction(e-> {
+            Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
+            confirm.setTitle("Accept Task?");
+            confirm.setHeaderText("Confirm Accept This Task?");
+            confirm.setContentText("This task will assign to you.");
+
+            Optional<ButtonType> result = confirm.showAndWait();
+            if (result.isPresent() && result.get() == ButtonType.OK){
+                acceptTask(task);
+                stage.close();
+            }
+        });
+
+        //Assign Task
+        Button assign = new Button("Assign");
+        assign.setVisible(false);
+        if (task.getAssignedTo().equals("Everyone")) {
+            assign.setVisible(true);
+        }
+        assign.setOnAction(e-> {
+            System.out.println("Clicked");
+        });
+
+        btnBox.setAlignment(Pos.CENTER_RIGHT);
+        btnBox.getChildren().addAll(assign, accept);
+        gridpane.add(btnBox, 1, 5);
+
+        //Box for Transder and Complete Task
+        HBox btnBox2 = new HBox(10);
+
+        //Transfer Task
+        Button transfer = new Button("Transfer");
+        transfer.setVisible(false);
+        if (task.getAssignedTo().equals(UserSession.getInstance().getName()) && !task.getStatus().equalsIgnoreCase("Complete")) {
+            transfer.setVisible(true);
+        }
+        transfer.setOnAction(e-> {
+            System.out.println("Clicked");
+        });
+
+        //Complete Task
+        Button done = new Button("Done");
+        done.setVisible(false);
+        if (task.getAssignedTo().equals(UserSession.getInstance().getName()) && !task.getStatus().equalsIgnoreCase("Complete")) {
+            done.setVisible(true);
+        }
+        done.setOnAction(e-> {
+            Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
+            confirm.setTitle("Complete Task?");
+            confirm.setHeaderText("Confirm Complete This Task?");
+            confirm.setContentText("This task will be marked as complete.");
+
+            Optional<ButtonType> result = confirm.showAndWait();
+            if (result.isPresent() && result.get() == ButtonType.OK){
+                doneTask(task);
+                stage.close();
+            }
+        });
+
+        btnBox2.getChildren().addAll(done, transfer);
+        gridpane.add(btnBox2, 2, 5);
+
         Scene scene = new Scene(gridpane, 600, 300);
         stage.setTitle("Detail");
         stage.setScene(scene);
         stage.show();
+    }
+
+    public void acceptTask(Task task){
+        new Thread(()-> {
+            try {
+                String projectId = "task-management-86056";
+                String idToken = UserSession.getInstance().getidToken();
+                String currentUser = UserSession.getInstance().getName();
+
+                String url = "https://firestore.googleapis.com/v1/projects/" + projectId + "/databases/(default)/documents/tasks/" + task.getId() + "?updateMask.fieldPaths=assignedTo";
+
+                String json = "{ \"fields\": { " +
+                    "\"assignedTo\": { \"stringValue\": \"" + currentUser + "\" } " +
+                    "} }";
+
+                HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(url))
+                    .method("PATCH", HttpRequest.BodyPublishers.ofString(json))
+                    .header("Content-Type", "application/json")
+                    .header("Authorization", "Bearer " + idToken)
+                    .build();
+
+                HttpClient client = HttpClient.newHttpClient();
+                HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+
+                System.out.println(response.body());
+
+            } catch (Exception e){
+                e.printStackTrace();
+            }
+        }).start();
+    }
+
+    public void doneTask(Task task){
+        new Thread(()-> {
+            try {
+                String projectId = "task-management-86056";
+                String idToken = UserSession.getInstance().getidToken();
+
+                String url = "https://firestore.googleapis.com/v1/projects/" + projectId + "/databases/(default)/documents/tasks/" + task.getId() + "?updateMask.fieldPaths=status";
+
+                String json = "{ \"fields\": { " +
+                    "\"status\": { \"stringValue\": \"Complete\" } " +
+                    "} }";
+
+                HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(url))
+                    .method("PATCH", HttpRequest.BodyPublishers.ofString(json))
+                    .header("Content-Type", "application/json")
+                    .header("Authorization", "Bearer " + idToken)
+                    .build();
+
+                HttpClient client = HttpClient.newHttpClient();
+                HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+
+                System.out.println(response.body());
+
+            } catch (Exception e){
+                e.printStackTrace();
+            }
+        }).start();
     }
 
     public static void main(String[] args) {

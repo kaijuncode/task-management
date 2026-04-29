@@ -7,6 +7,7 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
+import javafx.scene.layout.VBox;
 
 public class aboutpage extends Application{
     @Override
@@ -16,7 +17,11 @@ public class aboutpage extends Application{
         aboutpage.setVgap(10);
         aboutpage.setPadding(new Insets(10));
 
-        aboutpage.add(new Label("HIHIHIHI"), 0, 0);
+        VBox about = new VBox();
+        Label github = new Label("Github: github.com/kaijuncode");
+        about.getChildren().addAll(github);
+
+        aboutpage.add(about, 0, 0);
 
         Scene scene = new Scene(aboutpage, 400, 200);
         stage.setTitle("About");

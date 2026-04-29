@@ -1,6 +1,7 @@
 import java.util.*;
 import java.time.*;
 import javafx.util.Duration;
+import javafx.beans.binding.Bindings;
 
 import com.google.gson.*;
 
@@ -10,6 +11,7 @@ import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.geometry.VPos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
@@ -24,6 +26,13 @@ import java.net.URI;
 import java.net.http.*;
 
 public class mainpage extends Application{ 
+    private Filtermode currentMode = Filtermode.ALL;
+
+    enum Filtermode{
+        ALL,
+        MY_TASK,
+        COMPLETE
+    };
     @Override
     public void start(Stage stage){
         BorderPane mainpage = new BorderPane();
@@ -31,7 +40,10 @@ public class mainpage extends Application{
         //Menu
         //Task Menu Item
         MenuItem post = new MenuItem("Post Task");
-        MenuItem transfer = new MenuItem("Transfer Task");
+
+        //Administrator Menu Item
+        MenuItem status = new MenuItem("User Status");
+        MenuItem addUser = new MenuItem("Add User");
 
         //Help Menu Item
         MenuItem about = new MenuItem("About");
@@ -39,12 +51,14 @@ public class mainpage extends Application{
         MenuItem exit = new MenuItem("Exit");
 
         Menu taskMenu = new Menu("Task");
-        taskMenu.getItems().addAll(post, transfer);
+        taskMenu.getItems().addAll(post);
+        Menu adminMenu = new Menu("Administrator Tool");
+        adminMenu.getItems().addAll(status, addUser);
         Menu helpMenu = new Menu("Help");
         helpMenu.getItems().addAll(about,logout,exit);
 
         MenuBar menu = new MenuBar();
-        menu.getMenus().addAll(taskMenu, helpMenu);
+        menu.getMenus().addAll(taskMenu, adminMenu, helpMenu);
 
         //Post Task Page
         posttaskpage posttaskPage = new posttaskpage();
@@ -119,17 +133,61 @@ public class mainpage extends Application{
                         "-fx-background-radius: 8;"
                     );
 
-                    card.add(new Label("Company Name: " + task.getCompanyName()), 0, 0);
-                    card.add(new Label("Name: " + task.getCustomerName()), 0, 1);
-                    card.add(new Label("Contact Number: " + task.getContactNumber()), 1, 0);
-                    card.add(new Label("Software: " + task.getSoftware()), 1, 1);
+                    Label CompanyName = new Label("Company Name: " + task.getCompanyName());
+                    Label CustomerName = new Label("Name: " + task.getCustomerName());
+                    Label ContactNumber = new Label("Contact Number: " + task.getContactNumber());
+                    Label Software = new Label("Software: " + task.getSoftware());
+                    Label Time = new Label(task.getCreateTime());
+                    //The Person in Charge or Pending
+                    Label pic = new Label("The Person in Charge");
+                    Label taskStatus = new Label("");
+                    taskStatus.setAlignment(Pos.CENTER);
+                    if (!task.getAssignedTo().equals("Everyone")) {
+                        taskStatus.setText(task.getAssignedTo());
+                    }
+                    else{
+                        taskStatus.setTextFill(Color.RED);
+                        taskStatus.setText("Pending");
+                    }
+                    
+                    VBox cardBox1 = new VBox(3);
+                    cardBox1.setPrefWidth(200);
+                    cardBox1.getChildren().addAll(CompanyName, CustomerName);
+                    VBox cardBox2 = new VBox(3);
+                    cardBox2.setPrefWidth(170);
+                    cardBox2.getChildren().addAll(ContactNumber, Software);
+                    VBox cardBox3 = new VBox(3);
+                    cardBox3.setPrefWidth(150);
+                    cardBox3.setAlignment(Pos.CENTER);
+                    cardBox3.getChildren().addAll(pic, taskStatus);
 
+                    //Urgent - Red Background
                     if (task.isUrgent()){
-                        card.setStyle("-fx-background-color: #ffebee;");
+                        card.setStyle(
+                        "-fx-background-color: #ffebee;" +
+                        "-fx-border-color: #ccc;" +
+                        "-fx-border-radius: 8;" +
+                        "-fx-background-radius: 8;"
+                        );
                     }
 
+                    //Complete - Grey Background
+                    if (task.getStatus().equalsIgnoreCase("Complete")){
+                        card.setStyle(
+                        "-fx-background-color: #90EE90;" +
+                        "-fx-border-color: #ccc;" +
+                        "-fx-border-radius: 8;" +
+                        "-fx-background-radius: 8;"
+                        );
+                    }
+
+                    card.add(Time, 0, 0);
+                    card.add(cardBox1, 0, 1);
+                    card.add(cardBox2, 1, 1);
+                    card.add(cardBox3, 2, 1);
                     setGraphic(card);
 
+                    //See Task Detail
                     setOnMouseClicked(e-> {
                         new detailpage(task).start(new Stage());
                     });
@@ -137,10 +195,11 @@ public class mainpage extends Application{
             }
         });
 
-        loadTasks(table);
+        loadTasks(table, currentMode);
+        //Refesh Task List
         Timeline refresh = new Timeline(
         new KeyFrame(Duration.seconds(5), e -> {
-            loadTasks(table);
+            loadTasks(table, currentMode);
             })
         );
         refresh.setCycleCount(Timeline.INDEFINITE);
@@ -179,6 +238,23 @@ public class mainpage extends Application{
         rightBox.getChildren().addAll(nameLabel, statusLabel, statusBtn);
         right.add(rightBox, 0, 0);
 
+        //Bottom Area
+        GridPane bottom = new GridPane();
+        bottom.setHgap(10);
+        bottom.setVgap(10);
+        bottom.setAlignment(Pos.CENTER);
+
+        //Case Calculation
+        Label label = new Label("Pending Task Amount:");
+        Label count = new Label();
+        count.textProperty().bind(
+            Bindings.size(table.getItems()).asString("%d")
+        );
+        label.setFont(new Font("Times New Roman", 16));
+        count.setFont(new Font("Times New Roman", 16));
+        bottom.add(label, 0, 0);
+        bottom.add(count, 1, 0);
+
         //Left Area
         GridPane left = new GridPane();
         VBox btnBox = new VBox();
@@ -188,38 +264,36 @@ public class mainpage extends Application{
 
         //Task Type Button
         Button pendingBtn = new Button("Pending Task");
-        Button urgentBtn = new Button("Urgent Task");
         Button mytaskBtn = new Button("My Task");
+        Button completeBtn = new Button("Complete Task");
 
         pendingBtn.setMaxWidth(btnBox.getPrefWidth());
-        urgentBtn.setMaxWidth(btnBox.getPrefWidth());
         mytaskBtn.setMaxWidth(btnBox.getPrefWidth());
+        completeBtn.setMaxWidth(btnBox.getPrefWidth());
 
-        btnBox.getChildren().addAll(pendingBtn, urgentBtn, mytaskBtn);
+        btnBox.getChildren().addAll(pendingBtn, mytaskBtn, completeBtn);
         left.add(btnBox, 0, 0);
         
+        //Pending Task
         pendingBtn.setOnAction(e-> {
-            mainpage.setCenter(table);
+            label.setText("Pending Task Amount:");
+            currentMode = Filtermode.ALL;
+            loadTasks(table, currentMode);
         });
 
-        urgentBtn.setOnAction(e-> {
-            //mainpage.setCenter(scroll1);
-        });
-
+        //My Task
         mytaskBtn.setOnAction(e-> {
-            //mainpage.setCenter(mytaskTable);
+            label.setText("My Pending Task Amount:");
+            currentMode = Filtermode.MY_TASK;
+            loadTasks(table, currentMode);
         });
 
-        //Bottom Area
-        GridPane bottom = new GridPane();
-        bottom.setHgap(10);
-        bottom.setVgap(10);
-        bottom.setAlignment(Pos.CENTER);
-
-        //Case Calculation
-        Label pending = new Label("Pending Case Amount: ");
-        pending.setFont(new Font("Times New Roman", 16));
-        bottom.add(pending, 0, 0);
+        //Complete Task
+        completeBtn.setOnAction(e-> {
+            label.setText("Complete Task Amount:");
+            currentMode = Filtermode.COMPLETE;
+            loadTasks(table, currentMode);
+        });
 
         mainpage.setTop(menu);
         mainpage.setCenter(table);
@@ -233,11 +307,12 @@ public class mainpage extends Application{
         stage.show();
     }
 
-    public void loadTasks(ListView<Task> table){
+    public void loadTasks(ListView<Task> table, Filtermode mode){
         new Thread(() ->{
             try{
                 String projectId = "task-management-86056";
                 String idToken = UserSession.getInstance().getidToken();
+                String currentUser = UserSession.getInstance().getName();
 
                 String url = "https://firestore.googleapis.com/v1/projects/" + projectId + "/databases/(default)/documents/tasks";
 
@@ -261,6 +336,8 @@ public class mainpage extends Application{
                         for (JsonElement doc : documents){
                             JsonObject fields = doc.getAsJsonObject().getAsJsonObject("fields");
 
+                            String fullPath = doc.getAsJsonObject().get("name").getAsString();
+                            String id = fullPath.substring(fullPath.lastIndexOf("/") + 1);
                             String companyName = getField(fields, "company");
                             String customerName = getField(fields, "customer");
                             String contactNumber = getField(fields, "contact");
@@ -274,7 +351,32 @@ public class mainpage extends Application{
                             String createTime = getField(fields, "createTime");
                             String status = getField(fields, "status");
 
-                            Task task = new Task(companyName, customerName, contactNumber, software, issue, postBy, assignedTo, method, email, urgent, createTime, status);
+                            //Filter Task (My Pending Task)
+                            if (mode == Filtermode.MY_TASK){
+                                if (status.equalsIgnoreCase("Complete")){
+                                    continue;
+                                }
+                                if (!assignedTo.equalsIgnoreCase(currentUser)){
+                                    continue;
+                                }
+                            }
+
+                            //Filter Task (Complete Task)
+                            if (mode == Filtermode.COMPLETE){
+                                if (!status.equalsIgnoreCase("Complete")){
+                                    continue;
+                                }
+                            }
+
+                            //Filter Task (All Pending Task)
+                            if (mode == Filtermode.ALL){
+                                if (status.equalsIgnoreCase("Complete")){
+                                    continue;
+                                }
+                            }
+
+                            tasks.sort(Comparator.comparing(Task::getCreateDateTime));
+                            Task task = new Task(id, companyName, customerName, contactNumber, software, issue, postBy, assignedTo, method, email, urgent, createTime, status);
                             tasks.add(task);
                         }
                     }

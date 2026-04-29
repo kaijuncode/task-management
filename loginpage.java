@@ -26,7 +26,7 @@ public class loginpage extends Application{
 
         //Username Input
         loginpage.add(new Label("Email:"), 0, 0);
-        TextField usernameInt = new TextField();
+        TextField usernameInt = new TextField("kaijun@gmail.com");
         loginpage.add(usernameInt, 1, 0);
 
         //Password Input
