@@ -220,6 +220,10 @@ public class posttaskpage extends Application {
                                 if (name.equals("ADMIN")){
                                     continue;
                                 }
+                                String status = fields.getAsJsonObject("status").get("stringValue").getAsString();
+                                if (status.equalsIgnoreCase("OnSite") || status.equalsIgnoreCase("Block")){
+                                    continue;
+                                }
                                 userName.add(name);
                             }
                         }

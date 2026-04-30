@@ -18,6 +18,7 @@ import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.VBox;
+import javafx.scene.layout.HBox;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.stage.Stage;
@@ -228,9 +229,43 @@ public class mainpage extends Application{
         }).start();
 
         //Status
-        Label statusLabel = new Label("Available");
+        Label statusLabel = new Label("Loading...");
+        statusLabel.setTextFill(Color.GREY);
         statusLabel.setAlignment(Pos.CENTER);
+        Timeline statusRefresh = new Timeline(
+            new KeyFrame(Duration.seconds(3), e-> {
+                new Thread(() -> {
+                    try{
+                        UserSession session = UserSession.getInstance();
+                        ProfileService ps = new ProfileService();
+
+                        String userStatus = ps.getProfileStatus(session.getUid(), session.getidToken());
+
+                        Platform.runLater(()-> {
+                            if (userStatus.equalsIgnoreCase("Available")){
+                                statusLabel.setTextFill(Color.GREEN);
+                            }
+                            if (userStatus.equalsIgnoreCase("OnSite")){
+                                statusLabel.setTextFill(Color.GREENYELLOW);
+                            }
+                            if (userStatus.equalsIgnoreCase("Block")){
+                                statusLabel.setTextFill(Color.RED);
+                            }
+                            statusLabel.setText(userStatus);
+                        });
+                    } catch (Exception ex){
+                        ex.printStackTrace();
+                    }
+                }).start();
+            })
+        );
+        statusRefresh.setCycleCount(Timeline.INDEFINITE);
+        statusRefresh.play();
+
         Button statusBtn = new Button("Update Status");
+        statusBtn.setOnAction(e-> {
+            showUpdateStatus();
+        });
 
         nameLabel.setMaxWidth(rightBox.getPrefWidth());
         statusLabel.setMaxWidth(rightBox.getPrefWidth());
@@ -391,11 +426,57 @@ public class mainpage extends Application{
     }
 
     private String getField(JsonObject fields, String key){
-    if (fields.has(key)){
-        return fields.getAsJsonObject(key).get("stringValue").getAsString();
+        if (fields.has(key)){
+            return fields.getAsJsonObject(key).get("stringValue").getAsString();
+        }
+        return "";
     }
-    return "";
-}
+
+    public void showUpdateStatus(){
+        Stage stage = new Stage();
+
+        HBox btnBox = new HBox(10);
+        btnBox.setAlignment(Pos.CENTER);
+
+        Button avaBtn = new Button("Available");
+        Button siteBtn = new Button("OnSite");
+        Button blockBtn = new Button("Block");
+
+        btnBox.getChildren().addAll(avaBtn, siteBtn, blockBtn);
+
+        avaBtn.setOnAction(e-> {handleUpdateStatus("Available", stage);});
+        siteBtn.setOnAction(e-> {handleUpdateStatus("OnSite", stage);});
+        blockBtn.setOnAction(e-> {handleUpdateStatus("Block", stage);});
+
+        Scene scene = new Scene(btnBox, 300, 200);
+        stage.setTitle("Update Status");
+        stage.setScene(scene);
+        stage.show();
+    }
+
+    private void handleUpdateStatus(String newStatus, Stage stage){
+        new Thread(() ->{
+            try{
+                UserSession session = UserSession.getInstance();
+                ProfileService ps = new ProfileService();
+
+                ps.updateStatus(
+                    session.getUid(),
+                    session.getidToken(),
+                    newStatus
+                );
+
+                session.setStatus(newStatus);
+
+                Platform.runLater(() ->{
+                    stage.close();
+                });
+            } catch (Exception ex){
+                ex.printStackTrace();
+            }
+        }).start();
+    }
+
     public static void main(String[] args) {
         launch();
     }

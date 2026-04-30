@@ -5,6 +5,7 @@ public class UserSession {
     private String idToken;
     private String name;
     private String email;
+    private String status;
 
     private UserSession(){}
 
@@ -31,6 +32,10 @@ public class UserSession {
         return email;
     }
 
+    public String getStatus(){
+        return status;
+    }
+
     public void setUid(String uid){
         this.Uid = uid;
     }
@@ -47,10 +52,15 @@ public class UserSession {
         this.email = email;
     }
 
+    public void setStatus(String status){
+        this.status = status;
+    }
+
     public void clear(){
         Uid = null;
         idToken = null;
         name = null;
         email = null;
+        status = null;
     }
 }

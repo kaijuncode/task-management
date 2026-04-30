@@ -124,7 +124,8 @@ public class detailpage extends Application{
             assign.setVisible(true);
         }
         assign.setOnAction(e-> {
-            System.out.println("Clicked");
+            assignTask(task);
+            stage.close();
         });
 
         btnBox.setAlignment(Pos.CENTER_RIGHT);
@@ -141,7 +142,8 @@ public class detailpage extends Application{
             transfer.setVisible(true);
         }
         transfer.setOnAction(e-> {
-            System.out.println("Clicked");
+            stage.close();
+            transferTask(task);;
         });
 
         //Complete Task
@@ -172,6 +174,7 @@ public class detailpage extends Application{
         stage.show();
     }
 
+    //Assign Task to Current User
     public void acceptTask(Task task){
         new Thread(()-> {
             try {
@@ -203,6 +206,215 @@ public class detailpage extends Application{
         }).start();
     }
 
+    //Assign Pending Task to Someone
+    public void assignTask(Task task){
+        posttaskpage post = new posttaskpage();
+
+        Stage stage = new Stage();
+        
+        GridPane assignPane = new GridPane();
+        assignPane.setHgap(10);
+        assignPane.setVgap(10);
+        assignPane.setAlignment(Pos.CENTER);
+
+        HBox assignBox = new HBox(10);
+        assignBox.setPrefWidth(300); 
+        assignBox.setAlignment(Pos.CENTER);
+        Label assignLabel = new Label("Assign To:");
+        ComboBox<String> userList = new ComboBox<>();
+        post.loadUsersfromFirebase(userList);
+
+        assignBox.getChildren().addAll(assignLabel, userList);
+
+        HBox btnBox = new HBox();
+        btnBox.setPrefWidth(300); 
+        btnBox.setAlignment(Pos.CENTER);
+        Button assignBtn = new Button("Assign");
+
+        btnBox.getChildren().addAll(assignBtn);
+
+        assignPane.add(assignBox, 0, 0);
+        assignPane.add(btnBox, 0, 1);
+
+        assignBtn.setOnAction(e-> {
+            String newAssign = userList.getValue();
+            if (newAssign.equals("Everyone")){
+                Alert warning = new Alert(Alert.AlertType.WARNING);
+                warning.setHeaderText("Cannot Assign to Everyone Again");
+                warning.setContentText("Need to assign to someone.");
+                warning.showAndWait();
+                return;
+            }
+            Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
+            confirm.setHeaderText("Confirm Assign?");
+            confirm.setContentText("Confirm assign to " + newAssign + "?");
+            Optional<ButtonType> result = confirm.showAndWait();
+            if (result.isPresent() && result.get() != ButtonType.OK){
+                return;
+            }
+            new Thread(()-> {
+                try{
+                    String projectId = "task-management-86056";
+                    String idToken = UserSession.getInstance().getidToken();
+
+                    String url = "https://firestore.googleapis.com/v1/projects/" + projectId + "/databases/(default)/documents/tasks/" + task.getId() + "?updateMask.fieldPaths=assignedTo";
+
+                    String json = "{ \"fields\": { " +
+                        "\"assignedTo\": { \"stringValue\": \""+ newAssign +"\" } " +
+                        "} }";
+
+                    HttpRequest request = HttpRequest.newBuilder()
+                        .uri(URI.create(url))
+                        .method("PATCH", HttpRequest.BodyPublishers.ofString(json))
+                        .header("Content-Type", "application/json")
+                        .header("Authorization", "Bearer " + idToken)
+                        .build();
+
+                    HttpClient client = HttpClient.newHttpClient();
+                    HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+
+                    System.out.println(response.body());
+
+                    Platform.runLater(()->{
+                        stage.close();
+                    });
+
+                } catch (Exception ex){
+                    ex.printStackTrace();
+                }
+            }).start();
+        });
+        
+        Scene scene = new Scene(assignPane, 300, 200);
+        stage.setTitle("Assign Task");
+        stage.setScene(scene);
+        stage.show();
+    }
+
+    //Transfer Task to Others
+    public void transferTask(Task task){
+        Stage stage = new Stage();
+
+        GridPane transferPane = new GridPane();
+        transferPane.setHgap(10);
+        transferPane.setVgap(10);
+        transferPane.setAlignment(Pos.CENTER);
+
+        HBox transferBox = new HBox(10);
+        transferBox.setPrefWidth(300);
+        transferBox.setAlignment(Pos.CENTER);
+        Label transferLabel = new Label("Transfer To:");
+        ComboBox<String> userList = new ComboBox<>();
+        loadUserForTransfer(userList);
+        transferBox.getChildren().addAll(transferLabel, userList);
+
+        HBox btnBox = new HBox();
+        btnBox.setPrefWidth(300);
+        btnBox.setAlignment(Pos.CENTER);
+        Button transferBtn = new Button("Transfer");
+        btnBox.getChildren().addAll(transferBtn);
+
+        transferPane.add(transferBox, 0, 0);
+        transferPane.add(btnBox, 0, 1);
+
+        transferBtn.setOnAction(e-> {
+            String newTransfer = userList.getValue();
+            Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
+            confirm.setHeaderText("Confirm Transfer?");
+            confirm.setContentText("Confirm transfer to " + newTransfer + "?");
+            Optional<ButtonType> result = confirm.showAndWait();
+            if (result.isPresent() && result.get() != ButtonType.OK){
+                return;
+            }
+            new Thread(()-> {
+                try{
+                    String projectId = "task-management-86056";
+                    String idToken = UserSession.getInstance().getidToken();
+
+                    String url = "https://firestore.googleapis.com/v1/projects/" + projectId + "/databases/(default)/documents/tasks/" + task.getId() + "?updateMask.fieldPaths=assignedTo";
+
+                    String json = "{ \"fields\": { " +
+                        "\"assignedTo\": { \"stringValue\": \""+ newTransfer +"\" } " +
+                        "} }";
+
+                    HttpRequest request = HttpRequest.newBuilder()
+                        .uri(URI.create(url))
+                        .method("PATCH", HttpRequest.BodyPublishers.ofString(json))
+                        .header("Content-Type", "application/json")
+                        .header("Authorization", "Bearer " + idToken)
+                        .build();
+
+                    HttpClient client = HttpClient.newHttpClient();
+                    HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+
+                    System.out.println(response.body());
+
+                    Platform.runLater(()->{
+                        stage.close();
+                    });
+
+                } catch (Exception ex){
+                    ex.printStackTrace();
+                }
+            }).start();
+        });
+
+        Scene scene = new Scene(transferPane, 300, 200);
+        stage.setTitle("Transfer Task");
+        stage.setScene(scene);
+        stage.show();
+    }
+
+    //User List for Transfer Task
+    public void loadUserForTransfer(ComboBox<String> userList){
+        new Thread(()-> {
+            try{
+                String projectId = "task-management-86056";
+                String idToken = UserSession.getInstance().getidToken();
+
+                String url = "https://firestore.googleapis.com/v1/projects/" + projectId + "/databases/(default)/documents/users";
+
+                HttpRequest request = HttpRequest.newBuilder().uri(URI.create(url)).GET().header("Authorization", "Bearer " + idToken).build();
+        
+                HttpClient client = HttpClient.newHttpClient();
+                HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+
+                List<String> userName = new ArrayList<>();
+                userName.add("Everyone");
+
+                if (response.statusCode() == 200){
+                    JsonObject root = JsonParser.parseString(response.body()).getAsJsonObject();
+
+                    if (root.has("documents")){
+                        JsonArray documents = root.getAsJsonArray("documents");
+                        for (JsonElement doc : documents){
+                            JsonObject fields = doc.getAsJsonObject().getAsJsonObject("fields");
+                    
+                            if (fields.has("name")){
+                                String name = fields.getAsJsonObject("name").get("stringValue").getAsString();
+                                if (name.equals("ADMIN") || name.equals(UserSession.getInstance().getName())){
+                                    continue;
+                                }
+                                String status = fields.getAsJsonObject("status").get("stringValue").getAsString();
+                                if (status.equalsIgnoreCase("OnSite") || status.equalsIgnoreCase("Block")){
+                                    continue;
+                                }
+                                userName.add(name);
+                            }
+                        }
+                    }
+                }
+                Platform.runLater(() -> {
+                    userList.getItems().addAll(userName);
+                    userList.getSelectionModel().selectFirst();
+                });
+            } catch (Exception e){
+                e.printStackTrace();
+            }
+        }).start();
+    }
+
+    //Complete Task and Update Task Status
     public void doneTask(Task task){
         new Thread(()-> {
             try {

@@ -48,12 +48,19 @@ public class loginpage extends Application{
                 try{
                     FirebaseAuthService auth = new FirebaseAuthService();
                     AuthResult result = auth.login(email, password);
+                    ProfileService ps = new ProfileService();
 
                     String name = null;
+                    String status = null;
                     try {
                         name = getProfileName(result.Uid, result.idToken);
                     } catch (Exception e) {
                         name = null;
+                    }
+                    try {
+                        status = ps.getProfileStatus(result.Uid, result.idToken);
+                    } catch (Exception e){
+                        status = null;
                     }
 
                     UserSession session = UserSession.getInstance();
@@ -63,6 +70,7 @@ public class loginpage extends Application{
 
                     if (name != null){
                         session.setName(name);
+                        session.setStatus(status);
                         Platform.runLater(() ->{
                             stage.close();
                             mainpage otherPage = new mainpage();
@@ -142,10 +150,12 @@ public class loginpage extends Application{
                         authResult.Uid,
                         authResult.idToken,
                         authResult.email,
-                        nameInput.getText()
+                        nameInput.getText(),
+                        "Available"
                     );
 
                     session.setName(nameInput.getText());
+                    session.setStatus("Available");
                     Platform.runLater(() ->{
                         stage.close();
 
@@ -165,14 +175,15 @@ public class loginpage extends Application{
         stage.show();
     }
 
-    public void createProfile(String uid, String idToken, String email, String name) throws Exception{
+    public void createProfile(String uid, String idToken, String email, String name, String status) throws Exception{
         String projectID = "task-management-86056";
         String url = "https://firestore.googleapis.com/v1/projects/"
                 + projectID + "/databases/(default)/documents/users/" + uid;
 
         String json = "{ \"fields\": { " +
                 "\"email\": { \"stringValue\": \"" + email + "\" }, " +
-                "\"name\": { \"stringValue\": \"" + name + "\" } " +
+                "\"name\": { \"stringValue\": \"" + name + "\" }, " +
+                "\"status\": { \"stringValue\": \"" + status + "\" } " +
                 "} }";
 
         HttpRequest request = HttpRequest.newBuilder()
@@ -186,6 +197,7 @@ public class loginpage extends Application{
         client.send(request, HttpResponse.BodyHandlers.ofString());
     }
 
+    //Catch Name from Firestore
     public String getProfileName(String uid, String idToken) throws Exception {
         String projectID = "task-management-86056";
 
@@ -217,6 +229,7 @@ public class loginpage extends Application{
                 .get("stringValue")
                 .getAsString();
     }
+
     public static void main(String[] args) {
         launch();
     }
