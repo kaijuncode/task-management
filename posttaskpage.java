@@ -154,6 +154,7 @@ public class posttaskpage extends Application {
                 try{
                     //Post Task to Firestore
                     createTask(company,customer,contact,software,issue,postBy,assignedTo,method,emailVal,Urgent,createTime,status);
+                    updateLastUpdated();
                     Platform.runLater(() ->{
                         cmyName.clear();
                         Name.clear();
@@ -274,6 +275,27 @@ public class posttaskpage extends Application {
         if (response.statusCode() != 200) {
         throw new RuntimeException("Create Task Failed: " + response.body());
         }
+    }
+
+    public void updateLastUpdated() throws Exception{
+        String projectId = "task-management-86056";
+        String idToken = UserSession.getInstance().getidToken();
+
+        String url = "https://firestore.googleapis.com/v1/projects/" + projectId + "/databases/(default)/documents/system/meta";
+
+        String json = "{ \"fields\": { " +
+        "\"lastUpdated\": { \"timestampValue\": \"" + java.time.Instant.now().toString() + "\" }" +
+        "} }";
+
+        HttpRequest request = HttpRequest.newBuilder()
+            .uri(URI.create(url))
+            .method("PATCH", HttpRequest.BodyPublishers.ofString(json))
+            .header("Content-Type", "application.json")
+            .header("Authorization","Bearer " + idToken)
+            .build();
+
+        HttpClient client = HttpClient.newHttpClient();
+        client.send(request, HttpResponse.BodyHandlers.ofString()); 
     }
     public static void main(String[] args) {
         launch();

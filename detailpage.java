@@ -32,6 +32,9 @@ public class detailpage extends Application{
     }
     @Override
     public void start(Stage stage){
+        //To Update Last Updated Time
+        posttaskpage ptp = new posttaskpage();
+
         GridPane gridpane = new GridPane();
         gridpane.setHgap(10);
         gridpane.setVgap(10);
@@ -39,49 +42,108 @@ public class detailpage extends Application{
 
         //Company Name
         gridpane.add(new Label("Company Name:"), 0, 0);
-        TextField cmyName = new TextField(task.getCompanyName());
-        cmyName.setDisable(true);
+        Label cmyName = new Label(task.getCompanyName());
+        cmyName.setWrapText(true);
+        cmyName.setMaxWidth(200);
+        cmyName.setStyle(
+            "-fx-background-color: white;" +
+            "-fx-background-radius: 3;" +
+            "-fx-border-color: black;" +
+            "-fx-border-radius: 5;"+
+            "-fx-padding: 4 8 4 8"
+        );
         gridpane.add(cmyName, 1,0);
 
         //Customer Name
         gridpane.add(new Label("Name:"), 0, 1);
-        TextField Name = new TextField(task.getCustomerName());
-        Name.setDisable(true);
+        Label Name = new Label(task.getCustomerName());
+        Name.setMaxWidth(200);
+        Name.setStyle(
+            "-fx-background-color: white;" +
+            "-fx-background-radius: 3;" +
+            "-fx-border-color: black;" +
+            "-fx-border-radius: 5;"+
+            "-fx-padding: 4 8 4 8"
+        );
         gridpane.add(Name, 1, 1);
 
         //Contact Number
         gridpane.add(new Label("Contact Number:"), 0, 2);
-        TextField Contact = new TextField(task.getContactNumber());
-        Contact.setDisable(true);
+        Label Contact = new Label(task.getContactNumber());
+        Contact.setMaxWidth(200);
+        Contact.setStyle(
+            "-fx-background-color: white;" +
+            "-fx-background-radius: 3;" +
+            "-fx-border-color: black;" +
+            "-fx-border-radius: 5;"+
+            "-fx-padding: 4 8 4 8"
+        );
         gridpane.add(Contact, 1, 2);
 
         //Software
         gridpane.add(new Label("Software:"), 0, 3);
-        TextField Software = new TextField(task.getSoftware());
-        Software.setDisable(true);
+        Label Software = new Label(task.getSoftware());
+        Software.setMaxWidth(200);
+        Software.setStyle(
+            "-fx-background-color: white;" +
+            "-fx-background-radius: 3;" +
+            "-fx-border-color: black;" +
+            "-fx-border-radius: 5;"+
+            "-fx-padding: 4 8 4 8"
+        );
         gridpane.add(Software, 1, 3);
 
         //Issue/Request
         gridpane.add(new Label("Issue/Request:"), 0, 4);
-        TextField IssueReq = new TextField(task.getIssue());
-        IssueReq.setDisable(true);
+        Label IssueReq = new Label(task.getIssue());
+        IssueReq.setWrapText(true);
+        IssueReq.setMaxWidth(200);
+        IssueReq.setStyle(
+            "-fx-background-color: white;" +
+            "-fx-background-radius: 3;" +
+            "-fx-border-color: black;" +
+            "-fx-border-radius: 5;"+
+            "-fx-padding: 4 8 4 8"
+        );
         gridpane.add(IssueReq, 1, 4);
 
         //PostBy
         gridpane.add(new Label("Post By:"), 2, 0);
-        TextField Post = new TextField(task.getPostBy());
-        Post.setDisable(true);
+        Label Post = new Label(task.getPostBy());
+        Post.setMaxWidth(200);
+        Post.setStyle(
+            "-fx-background-color: white;" +
+            "-fx-background-radius: 3;" +
+            "-fx-border-color: black;" +
+            "-fx-border-radius: 5;"+
+            "-fx-padding: 4 8 4 8"
+        );
         gridpane.add(Post, 3, 0);
 
         //Assigned To
         gridpane.add(new Label("Assigned To:"), 2, 1);
-        TextField assignUser = new TextField(task.getAssignedTo());
-        assignUser.setDisable(true);
+        Label assignUser = new Label(task.getAssignedTo());
+        assignUser.setMaxWidth(200);
+        assignUser.setStyle(
+            "-fx-background-color: white;" +
+            "-fx-background-radius: 3;" +
+            "-fx-border-color: black;" +
+            "-fx-border-radius: 5;"+
+            "-fx-padding: 4 8 4 8"
+        );
         gridpane.add(assignUser, 3, 1);
 
         //Hotline or Email
         gridpane.add(new Label("Contact Method:"), 2, 2);
         Label methodLabel = new Label(task.getMethod());
+        methodLabel.setMaxWidth(200);
+        methodLabel.setStyle(
+            "-fx-background-color: white;" +
+            "-fx-background-radius: 3;" +
+            "-fx-border-color: black;" +
+            "-fx-border-radius: 5;"+
+            "-fx-padding: 4 8 4 8"
+        );
         gridpane.add(methodLabel, 3, 2);
         if (task.getMethod().equals("Email")) {
             methodLabel.setText("Email (" + task.getEmail() + ")");
@@ -89,11 +151,29 @@ public class detailpage extends Application{
         
         //Urgent?
         gridpane.add(new Label("Urgent:"), 2, 3);
-        gridpane.add(new Label((task.isUrgent() ? "Yes" : "No")),3, 3);
+        Label urgent = new Label(task.isUrgent() ? "Yes" : "No");
+        urgent.setMaxWidth(200);
+        urgent.setStyle(
+            "-fx-background-color: white;" +
+            "-fx-background-radius: 3;" +
+            "-fx-border-color: black;" +
+            "-fx-border-radius: 5;"+
+            "-fx-padding: 4 8 4 8"
+        );
+        gridpane.add(urgent, 3, 3);
 
         //Time
         gridpane.add(new Label("Created Time:"), 2, 4);
-        gridpane.add(new Label(task.getCreateTime()), 3, 4);
+        Label createTime = new Label(task.getCreateTime());
+        createTime.setMaxWidth(200);
+        createTime.setStyle(
+            "-fx-background-color: white;" +
+            "-fx-background-radius: 3;" +
+            "-fx-border-color: black;" +
+            "-fx-border-radius: 5;"+
+            "-fx-padding: 4 8 4 8"
+        );
+        gridpane.add(createTime, 3, 4);
 
         //Box for Accept and Assign Button
         HBox btnBox = new HBox(10);
@@ -113,6 +193,11 @@ public class detailpage extends Application{
             Optional<ButtonType> result = confirm.showAndWait();
             if (result.isPresent() && result.get() == ButtonType.OK){
                 acceptTask(task);
+                try{
+                    ptp.updateLastUpdated();
+                } catch (Exception ex){
+                    ex.printStackTrace();
+                }
                 stage.close();
             }
         });
@@ -125,6 +210,11 @@ public class detailpage extends Application{
         }
         assign.setOnAction(e-> {
             assignTask(task);
+            try{
+                ptp.updateLastUpdated();
+            } catch (Exception ex){
+                ex.printStackTrace();
+            }
             stage.close();
         });
 
@@ -143,7 +233,12 @@ public class detailpage extends Application{
         }
         transfer.setOnAction(e-> {
             stage.close();
-            transferTask(task);;
+            transferTask(task);
+            try{
+                ptp.updateLastUpdated();
+            } catch (Exception ex){
+                ex.printStackTrace();
+            }
         });
 
         //Complete Task
@@ -161,6 +256,11 @@ public class detailpage extends Application{
             Optional<ButtonType> result = confirm.showAndWait();
             if (result.isPresent() && result.get() == ButtonType.OK){
                 doneTask(task);
+                try{
+                    ptp.updateLastUpdated();
+                } catch (Exception ex){
+                    ex.printStackTrace();
+                }
                 stage.close();
             }
         });
@@ -168,7 +268,7 @@ public class detailpage extends Application{
         btnBox2.getChildren().addAll(done, transfer);
         gridpane.add(btnBox2, 2, 5);
 
-        Scene scene = new Scene(gridpane, 600, 300);
+        Scene scene = new Scene(gridpane, 700, 300);
         stage.setTitle("Detail");
         stage.setScene(scene);
         stage.show();

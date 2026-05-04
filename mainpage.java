@@ -27,6 +27,7 @@ import java.net.URI;
 import java.net.http.*;
 
 public class mainpage extends Application{ 
+    private String lastUpdatedCache = "";
     private Filtermode currentMode = Filtermode.ALL;
 
     enum Filtermode{
@@ -66,6 +67,12 @@ public class mainpage extends Application{
         post.setOnAction(e ->{
             Stage newStage = new Stage();
             posttaskPage.start(newStage);
+        });
+
+        userstatuspage userstatusPage = new userstatuspage();
+        status.setOnAction(e-> {
+            Stage newStage = new Stage();
+            userstatusPage.start(newStage);
         });
 
         //About Page
@@ -197,10 +204,22 @@ public class mainpage extends Application{
         });
 
         loadTasks(table, currentMode);
-        //Refesh Task List
+        //Refresh Task List
         Timeline refresh = new Timeline(
-        new KeyFrame(Duration.seconds(5), e -> {
-            loadTasks(table, currentMode);
+        new KeyFrame(Duration.seconds(3), e -> {
+            try{
+                String lastest = getLastUpdated();
+
+                if (!lastest.equals(lastUpdatedCache)){
+                    lastUpdatedCache = lastest;
+
+                    Platform.runLater(() ->{
+                        loadTasks(table, currentMode);
+                    });
+                }
+            } catch (Exception ex){
+                ex.printStackTrace();
+            }
             })
         );
         refresh.setCycleCount(Timeline.INDEFINITE);
@@ -232,8 +251,10 @@ public class mainpage extends Application{
         Label statusLabel = new Label("Loading...");
         statusLabel.setTextFill(Color.GREY);
         statusLabel.setAlignment(Pos.CENTER);
+
+        //Status Refresh
         Timeline statusRefresh = new Timeline(
-            new KeyFrame(Duration.seconds(3), e-> {
+            new KeyFrame(Duration.seconds(5), e-> {
                 new Thread(() -> {
                     try{
                         UserSession session = UserSession.getInstance();
@@ -342,6 +363,35 @@ public class mainpage extends Application{
         stage.show();
     }
 
+    //Get Task Last Updated
+    public String getLastUpdated() throws Exception{
+        String projectId = "task-management-86056";
+        String idToken = UserSession.getInstance().getidToken();
+
+        String url = "https://firestore.googleapis.com/v1/projects/" + projectId + "/databases/(default)/documents/system/meta";
+
+        HttpRequest request = HttpRequest.newBuilder()
+            .uri(URI.create(url))
+            .header("Authorization", "Bearer " + idToken)
+            .GET()
+            .build();
+
+        HttpClient client = HttpClient.newHttpClient();
+        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+
+        if (response.statusCode() != 200){
+            throw new Exception("Failed to get lastUpdated");
+        }
+
+        JsonObject root = JsonParser.parseString(response.body()).getAsJsonObject();
+
+        return root.getAsJsonObject("fields")
+            .getAsJsonObject("lastUpdated")
+            .get("timestampValue")
+            .getAsString();
+    }
+
+    //Load Task
     public void loadTasks(ListView<Task> table, Filtermode mode){
         new Thread(() ->{
             try{
@@ -409,14 +459,13 @@ public class mainpage extends Application{
                                     continue;
                                 }
                             }
-
-                            tasks.sort(Comparator.comparing(Task::getCreateDateTime));
                             Task task = new Task(id, companyName, customerName, contactNumber, software, issue, postBy, assignedTo, method, email, urgent, createTime, status);
                             tasks.add(task);
                         }
                     }
                 }
                 Platform.runLater(() ->{
+                    tasks.sort(Comparator.comparing(Task::getCreateDateTime));
                     table.getItems().setAll(tasks);
                 });
             } catch (Exception e){
