@@ -62,7 +62,7 @@ public class ProfileService {
 
         String url = "https://firestore.googleapis.com/v1/projects/"
                 + projectID + "/databases/(default)/documents/users/" + uid
-                + "?updateMask.fieldPaths=status"; // ⚠️ 很重要！
+                + "?updateMask.fieldPaths=status"; 
 
         String json = "{ \"fields\": { " +
                 "\"status\": { \"stringValue\": \"" + newStatus + "\" } " +

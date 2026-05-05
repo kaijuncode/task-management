@@ -36,7 +36,7 @@ public class mainpage extends Application{
         COMPLETE
     };
     @Override
-    public void start(Stage stage){
+    public void start(Stage stage1){
         BorderPane mainpage = new BorderPane();
 
         //Menu
@@ -45,7 +45,6 @@ public class mainpage extends Application{
 
         //Administrator Menu Item
         MenuItem status = new MenuItem("User Status");
-        MenuItem addUser = new MenuItem("Add User");
 
         //Help Menu Item
         MenuItem about = new MenuItem("About");
@@ -55,7 +54,7 @@ public class mainpage extends Application{
         Menu taskMenu = new Menu("Task");
         taskMenu.getItems().addAll(post);
         Menu adminMenu = new Menu("Administrator Tool");
-        adminMenu.getItems().addAll(status, addUser);
+        adminMenu.getItems().addAll(status);
         Menu helpMenu = new Menu("Help");
         helpMenu.getItems().addAll(about,logout,exit);
 
@@ -93,7 +92,7 @@ public class mainpage extends Application{
             Optional<ButtonType> result = LOGOUT.showAndWait();
 
             if (result.isPresent() && result.get() == ButtonType.OK){
-                stage.close();
+                stage1.close();
                 Stage newStage = new Stage();
                 loginPage.start(newStage);
             }
@@ -263,6 +262,9 @@ public class mainpage extends Application{
                         String userStatus = ps.getProfileStatus(session.getUid(), session.getidToken());
 
                         Platform.runLater(()-> {
+                            if (userStatus.equalsIgnoreCase("OnLeave")){
+                                handleUpdateStatus("Available", stage1);
+                            }
                             if (userStatus.equalsIgnoreCase("Available")){
                                 statusLabel.setTextFill(Color.GREEN);
                             }
@@ -358,9 +360,9 @@ public class mainpage extends Application{
         mainpage.setBottom(bottom);
 
         Scene scene = new Scene(mainpage, 800, 600);
-        stage.setTitle("Task Management System");
-        stage.setScene(scene);
-        stage.show();
+        stage1.setTitle("Task Management System");
+        stage1.setScene(scene);
+        stage1.show();
     }
 
     //Get Task Last Updated

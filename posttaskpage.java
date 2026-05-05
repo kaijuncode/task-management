@@ -222,7 +222,7 @@ public class posttaskpage extends Application {
                                     continue;
                                 }
                                 String status = fields.getAsJsonObject("status").get("stringValue").getAsString();
-                                if (status.equalsIgnoreCase("OnSite") || status.equalsIgnoreCase("Block")){
+                                if (status.equalsIgnoreCase("OnSite") || status.equalsIgnoreCase("Block") || status.equalsIgnoreCase("OnLeave")){
                                     continue;
                                 }
                                 userName.add(name);
