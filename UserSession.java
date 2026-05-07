@@ -6,6 +6,7 @@ public class UserSession {
     private String name;
     private String email;
     private String status;
+    private String role;
 
     private UserSession(){}
 
@@ -36,6 +37,10 @@ public class UserSession {
         return status;
     }
 
+    public String getRole(){
+        return role;
+    }
+
     public void setUid(String uid){
         this.Uid = uid;
     }
@@ -56,11 +61,16 @@ public class UserSession {
         this.status = status;
     }
 
+    public void setRole(String role){
+        this.role = role;
+    }
+
     public void clear(){
         Uid = null;
         idToken = null;
         name = null;
         email = null;
         status = null;
+        role = null;
     }
 }

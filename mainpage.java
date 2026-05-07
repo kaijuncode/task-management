@@ -45,6 +45,7 @@ public class mainpage extends Application{
 
         //Administrator Menu Item
         MenuItem status = new MenuItem("User Status");
+        MenuItem role = new MenuItem("User Role");
 
         //Help Menu Item
         MenuItem about = new MenuItem("About");
@@ -54,7 +55,7 @@ public class mainpage extends Application{
         Menu taskMenu = new Menu("Task");
         taskMenu.getItems().addAll(post);
         Menu adminMenu = new Menu("Administrator Tool");
-        adminMenu.getItems().addAll(status);
+        adminMenu.getItems().addAll(status, role);
         Menu helpMenu = new Menu("Help");
         helpMenu.getItems().addAll(about,logout,exit);
 
@@ -68,10 +69,18 @@ public class mainpage extends Application{
             posttaskPage.start(newStage);
         });
 
+        //User Status Page
         userstatuspage userstatusPage = new userstatuspage();
         status.setOnAction(e-> {
             Stage newStage = new Stage();
             userstatusPage.start(newStage);
+        });
+
+        //User Role Page
+        userrolepage userrolePage = new userrolepage();
+        role.setOnAction(e-> {
+            Stage newStage = new Stage();
+            userrolePage.start(newStage);
         });
 
         //About Page
@@ -205,7 +214,7 @@ public class mainpage extends Application{
         loadTasks(table, currentMode);
         //Refresh Task List
         Timeline refresh = new Timeline(
-        new KeyFrame(Duration.seconds(3), e -> {
+        new KeyFrame(Duration.seconds(5), e -> {
             try{
                 String lastest = getLastUpdated();
 
@@ -233,13 +242,16 @@ public class mainpage extends Application{
 
         //UserName
         Label nameLabel = new Label();
+        Label roleLabel = new Label();
         nameLabel.setAlignment(Pos.CENTER);
         new Thread(() ->{
             try{
                 String name = UserSession.getInstance().getName();
+                String userRole = UserSession.getInstance().getRole();
 
                 Platform.runLater(() ->{
                     nameLabel.setText(name);
+                    roleLabel.setText(userRole);
                 });
             } catch (Exception e){
                 nameLabel.setText("Error");
@@ -293,7 +305,7 @@ public class mainpage extends Application{
         nameLabel.setMaxWidth(rightBox.getPrefWidth());
         statusLabel.setMaxWidth(rightBox.getPrefWidth());
         statusBtn.setMaxWidth(rightBox.getPrefWidth());
-        rightBox.getChildren().addAll(nameLabel, statusLabel, statusBtn);
+        rightBox.getChildren().addAll(nameLabel, roleLabel, statusLabel, statusBtn);
         right.add(rightBox, 0, 0);
 
         //Bottom Area
@@ -341,7 +353,7 @@ public class mainpage extends Application{
 
         //My Task
         mytaskBtn.setOnAction(e-> {
-            label.setText("My Pending Task Amount:");
+            label.setText("My Task Amount:");
             currentMode = Filtermode.MY_TASK;
             loadTasks(table, currentMode);
         });
@@ -440,9 +452,6 @@ public class mainpage extends Application{
 
                             //Filter Task (My Pending Task)
                             if (mode == Filtermode.MY_TASK){
-                                if (status.equalsIgnoreCase("Complete")){
-                                    continue;
-                                }
                                 if (!assignedTo.equalsIgnoreCase(currentUser)){
                                     continue;
                                 }
@@ -467,7 +476,15 @@ public class mainpage extends Application{
                     }
                 }
                 Platform.runLater(() ->{
-                    tasks.sort(Comparator.comparing(Task::getCreateDateTime));
+                    if (mode == Filtermode.COMPLETE){
+                        tasks.sort(Comparator.comparing(Task::getCreateDateTime));
+                    }
+                    else if (mode == Filtermode.MY_TASK){
+                        tasks.sort(Comparator.comparing((Task task) -> task.isUrgent()&&!task.getStatus().equalsIgnoreCase("Complete")).reversed().thenComparing(Task -> Task.getStatus().equalsIgnoreCase("Complete")).thenComparing(Task::getCreateDateTime));
+                    }
+                    else {
+                        tasks.sort(Comparator.comparing(Task::isUrgent).reversed().thenComparing(Task::getCreateDateTime));
+                    }
                     table.getItems().setAll(tasks);
                 });
             } catch (Exception e){
@@ -522,13 +539,9 @@ public class mainpage extends Application{
                 Platform.runLater(() ->{
                     stage.close();
                 });
-            } catch (Exception ex){
-                ex.printStackTrace();
+            } catch (Exception e){
+                e.printStackTrace();
             }
         }).start();
-    }
-
-    public static void main(String[] args) {
-        launch();
     }
 }

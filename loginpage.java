@@ -52,6 +52,7 @@ public class loginpage extends Application{
 
                     String name = null;
                     String status = null;
+                    String role = null;
                     try {
                         name = getProfileName(result.Uid, result.idToken);
                     } catch (Exception e) {
@@ -62,6 +63,11 @@ public class loginpage extends Application{
                     } catch (Exception e){
                         status = null;
                     }
+                    try {
+                        role = ps.getProfileRole(result.Uid, result.idToken);
+                    } catch (Exception e){
+                        role = null;
+                    }
 
                     UserSession session = UserSession.getInstance();
                     session.setUid(result.Uid);
@@ -71,6 +77,7 @@ public class loginpage extends Application{
                     if (name != null){
                         session.setName(name);
                         session.setStatus(status);
+                        session.setRole(role);
                         Platform.runLater(() ->{
                             stage.close();
                             mainpage otherPage = new mainpage();
@@ -151,7 +158,8 @@ public class loginpage extends Application{
                         authResult.idToken,
                         authResult.email,
                         nameInput.getText(),
-                        "Available"
+                        "Available",
+                        "-"
                     );
 
                     session.setName(nameInput.getText());
@@ -175,7 +183,7 @@ public class loginpage extends Application{
         stage.show();
     }
 
-    public void createProfile(String uid, String idToken, String email, String name, String status) throws Exception{
+    public void createProfile(String uid, String idToken, String email, String name, String status, String role) throws Exception{
         String projectID = "task-management-86056";
         String url = "https://firestore.googleapis.com/v1/projects/"
                 + projectID + "/databases/(default)/documents/users/" + uid;
@@ -183,7 +191,8 @@ public class loginpage extends Application{
         String json = "{ \"fields\": { " +
                 "\"email\": { \"stringValue\": \"" + email + "\" }, " +
                 "\"name\": { \"stringValue\": \"" + name + "\" }, " +
-                "\"status\": { \"stringValue\": \"" + status + "\" } " +
+                "\"status\": { \"stringValue\": \"" + status + "\" }, " +
+                "\"role\": { \"stringValue\": \"" + role + "\" } " +
                 "} }";
 
         HttpRequest request = HttpRequest.newBuilder()

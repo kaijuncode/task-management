@@ -81,5 +81,35 @@ public class ProfileService {
         System.out.println("Update Status Response: " + response.body());
     }
 
-    
+    public String getProfileRole(String uid, String idToken) throws Exception {
+        String projectID = "task-management-86056";
+
+        String url = "https://firestore.googleapis.com/v1/projects/"
+                + projectID + "/databases/(default)/documents/users/" + uid;
+
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(url))
+                .GET()
+                .header("Authorization", "Bearer " + idToken)
+                .build();
+
+        HttpClient client = HttpClient.newHttpClient();
+        HttpResponse<String> respond = client.send(request, HttpResponse.BodyHandlers.ofString());
+
+        if (respond.statusCode() == 200){
+            return extractRole(respond.body());
+        }
+        else{
+            throw new RuntimeException();
+        }
+    }
+
+    public String extractRole(String json){
+        JsonObject root = JsonParser.parseString(json).getAsJsonObject();
+
+        return root.getAsJsonObject("fields")
+                .getAsJsonObject("role")
+                .get("stringValue")
+                .getAsString();
+    }
 }

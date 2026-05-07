@@ -181,7 +181,7 @@ public class detailpage extends Application{
         //Accept Task
         Button accept = new Button("Accept");
         accept.setVisible(false);
-        if (task.getAssignedTo().equals("Everyone")) {
+        if (task.getAssignedTo().equals("Everyone") && UserSession.getInstance().getRole().equalsIgnoreCase("support")) {
             accept.setVisible(true);
         }
         accept.setOnAction(e-> {
@@ -210,11 +210,6 @@ public class detailpage extends Application{
         }
         assign.setOnAction(e-> {
             assignTask(task);
-            try{
-                ptp.updateLastUpdated();
-            } catch (Exception ex){
-                ex.printStackTrace();
-            }
             stage.close();
         });
 
@@ -234,11 +229,6 @@ public class detailpage extends Application{
         transfer.setOnAction(e-> {
             stage.close();
             transferTask(task);
-            try{
-                ptp.updateLastUpdated();
-            } catch (Exception ex){
-                ex.printStackTrace();
-            }
         });
 
         //Complete Task
@@ -376,6 +366,14 @@ public class detailpage extends Application{
                     System.out.println(response.body());
 
                     Platform.runLater(()->{
+                        posttaskpage ptp = new posttaskpage();
+                        new Thread(()-> {
+                            try{
+                                ptp.updateLastUpdated();
+                            } catch (Exception ex){
+                                ex.printStackTrace();
+                            }
+                        }).start();
                         stage.close();
                     });
 
@@ -450,6 +448,14 @@ public class detailpage extends Application{
                     System.out.println(response.body());
 
                     Platform.runLater(()->{
+                        posttaskpage ptp = new posttaskpage();
+                        new Thread(()-> {
+                            try{
+                                ptp.updateLastUpdated();
+                            } catch (Exception ex){
+                                ex.printStackTrace();
+                            }
+                        }).start();
                         stage.close();
                     });
 

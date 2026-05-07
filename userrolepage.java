@@ -16,20 +16,20 @@ import javafx.stage.Stage;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 
-public class userstatuspage extends Application{
-    private ListView<User> statusListRef;
+public class userrolepage extends Application{
+    private ListView<UserRole> roleListRef;
     @Override
     public void start(Stage stage){
-        BorderPane status = new BorderPane();
+        BorderPane role = new BorderPane();
 
-        ListView<User> statusList = new ListView<>();
-        statusList.setSelectionModel(null);
-        statusList.setFocusTraversable(false);
-        statusListRef = statusList;
+        ListView<UserRole> roleList = new ListView<>();
+        roleList.setSelectionModel(null);
+        roleList.setFocusTraversable(false);
+        roleListRef = roleList;
 
-        statusList.setCellFactory(param -> new ListCell<User>(){
+        roleList.setCellFactory(param -> new ListCell<UserRole>(){
             @Override
-            protected void updateItem(User user, boolean empty){
+            protected void updateItem(UserRole user, boolean empty){
                 super.updateItem(user, empty);
 
                 if (empty || user == null){
@@ -51,114 +51,86 @@ public class userstatuspage extends Application{
 
                     Label userName = new Label(user.getUserName());
                     HBox usernameBox = new HBox();
-                    usernameBox.setPrefWidth(60);
+                    usernameBox.setPrefWidth(80);
                     usernameBox.setAlignment(Pos.CENTER);
                     usernameBox.getChildren().addAll(userName);
-                    Label status = new Label(user.getUserStatus());
-                    HBox statusBox = new HBox();
-                    statusBox.setPrefWidth(60);
-                    statusBox.setAlignment(Pos.CENTER);
-                    statusBox.getChildren().addAll(status);
-                    Label pending = new Label("Pending Task Amount: " + user.getPendingCount());
-                    HBox pendingBox = new HBox();
-                    pendingBox.setPrefWidth(150);
-                    pendingBox.setAlignment(Pos.CENTER);
-                    pendingBox.getChildren().addAll(pending);
+                    Label role = new Label(user.getUserRole());
+                    HBox roleBox = new HBox();
+                    roleBox.setPrefWidth(80);
+                    roleBox.setAlignment(Pos.CENTER);
+                    roleBox.getChildren().addAll(role);
                     Button editBtn = new Button("Edit");
                     HBox btnBox = new HBox();
                     btnBox.setPrefWidth(50);
                     btnBox.setAlignment(Pos.CENTER);
                     btnBox.getChildren().addAll(editBtn);
 
-                    if (user.getUserStatus().equals("Block")){
-                        status.setTextFill(Color.RED);
-                    }
-
-                    if (user.getUserStatus().equals("OnSite")){
-                        status.setTextFill(Color.GREENYELLOW);
-                    }
-
-                    if (user.getUserStatus().equals("Available")){
-                        status.setTextFill(Color.GREEN);
-                    }
-
-                    if (user.getUserStatus().equals("OnLeave")){
-                        status.setTextFill(Color.GREY);
-                    }
-
                     card.add(usernameBox, 0, 0);
-                    card.add(statusBox, 1, 0);
-                    card.add(pendingBox, 2, 0);
-                    card.add(btnBox, 3, 0);
+                    card.add(roleBox, 1, 0);
+                    card.add(btnBox, 2, 0);
                     setGraphic(card);
 
                     editBtn.setOnAction(e->{
                         if (UserSession.getInstance().getName().equals("ADMIN")){
-                            editStatusWindow(user);
+                            editRoleWindow(user);
                         }
                         else {
                             Alert warning = new Alert(Alert.AlertType.WARNING);
                             warning.setHeaderText("Access Denied");
-                            warning.setContentText("Need ADMIN-ACCESS.");
+                            warning.setContentText("Need ADMIN-ACCESS");
                             warning.showAndWait();
                         }
                     });
                 }
             }
         });
-        loadUserStatus(statusList);
+        loadUserRole(roleList);
 
-        status.setCenter(statusList);
-        Scene scene = new Scene(status, 450, 200);
-        stage.setTitle("User Status");
+        role.setCenter(roleList);
+        Scene scene = new Scene(role, 300, 200);
+        stage.setTitle("User Role");
         stage.setScene(scene);
         stage.show();
     }
 
-    public void editStatusWindow(User user){
+    public void editRoleWindow(UserRole user){
         Stage stage = new Stage();
 
-        VBox statusWindow = new VBox(10);
-        statusWindow.setAlignment(Pos.CENTER);
-        statusWindow.setPadding(new Insets(10));
+        VBox roleWindow = new VBox(10);
+        roleWindow.setAlignment(Pos.CENTER);
+        roleWindow.setPadding(new Insets(10));
 
-        Label title = new Label("Update Status for " + user.getUserName());
+        Label title = new Label("Update Role for " + user.getUserName());
 
-        Button available = new Button("Available");
-        Button onsite = new Button("OnSite");
-        Button block = new Button("Block");
-        Button leave = new Button("OnLeave");
+        Button admin = new Button("Admin");
+        Button support = new Button("Support");
 
-        available.setMaxWidth(Double.MAX_VALUE);
-        onsite.setMaxWidth(Double.MAX_VALUE);
-        block.setMaxWidth(Double.MAX_VALUE);
-        leave.setMaxWidth(Double.MAX_VALUE);
+        admin.setMaxWidth(Double.MAX_VALUE);
+        support.setMaxWidth(Double.MAX_VALUE);
 
-        available.setOnAction(e -> editStatus(user, "Available", stage));
-        onsite.setOnAction(e -> editStatus(user, "OnSite", stage));
-        block.setOnAction(e -> editStatus(user, "Block", stage));
-        leave.setOnAction(e -> editStatus(user, "OnLeave", stage));
+        admin.setOnAction(e -> editRole(user, "Admin", stage));
+        support.setOnAction(e -> editRole(user, "Support", stage));
 
-        statusWindow.getChildren().addAll(title, available, onsite, block, leave);
+        roleWindow.getChildren().addAll(title, admin, support);
 
-        Scene scene = new Scene(statusWindow, 250, 200);
-        stage.setTitle("Edit Status");
+        Scene scene = new Scene(roleWindow, 250, 200);
+        stage.setTitle("Edit Role");
         stage.setScene(scene);
         stage.show();
     }
 
-    public void editStatus(User user, String newStatus, Stage window){
+    public void editRole(UserRole userRole, String newRole, Stage window){
         new Thread(()->{
             try{
                 String projectID = "task-management-86056";
                 String idToken = UserSession.getInstance().getidToken();
 
                 String url = "https://firestore.googleapis.com/v1/projects/"
-                        + projectID + "/databases/(default)/documents/users/" + user.getId()
-                        + "?updateMask.fieldPaths=status"; 
+                        + projectID + "/databases/(default)/documents/users/" + userRole.getId()
+                        + "?updateMask.fieldPaths=role"; 
 
                 String json = "{ \"fields\": { " +
-                        "\"status\": { \"stringValue\": \"" + newStatus + "\" } " +
+                        "\"role\": { \"stringValue\": \"" + newRole + "\" } " +
                         "} }";
 
                 HttpRequest request = HttpRequest.newBuilder()
@@ -174,7 +146,7 @@ public class userstatuspage extends Application{
                 if (response.statusCode() == 200){
                     Platform.runLater(()-> {
                         window.close();
-                        refreshStatus();
+                        refreshRole();
                     });
                 }
                 else{
@@ -186,11 +158,11 @@ public class userstatuspage extends Application{
         }).start();
     }
 
-    public void refreshStatus(){
-        loadUserStatus(statusListRef);
+    public void refreshRole(){
+        loadUserRole(roleListRef);
     }
 
-    public void loadUserStatus(ListView<User> statusList){
+    public void loadUserRole(ListView<UserRole> roleList){
         new Thread(() ->{
             try{
                 String projectId = "task-management-86056";
@@ -207,38 +179,7 @@ public class userstatuspage extends Application{
                 HttpClient client = HttpClient.newHttpClient();
                 HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
 
-                List<User> users = new ArrayList<>();
-
-                String taskUrl = "https://firestore.googleapis.com/v1/projects/" + projectId + "/databases/(default)/documents/tasks";
-                HttpRequest taskRequest = HttpRequest.newBuilder()
-                    .uri(URI.create(taskUrl))
-                    .header("Authorization", "Bearer " + idToken)
-                    .GET()
-                    .build();
-
-                HttpClient taskClient = HttpClient.newHttpClient();
-                HttpResponse<String> taskResponse = taskClient.send(taskRequest, HttpResponse.BodyHandlers.ofString());
-
-                Map<String, Integer> pendingMap = new HashMap<>();
-
-                if (taskResponse.statusCode() == 200){
-                    JsonObject taskRoot = JsonParser.parseString(taskResponse.body()).getAsJsonObject();
-
-                    if (taskRoot.has("documents")){
-                        JsonArray taskDocuments = taskRoot.getAsJsonArray("documents");
-
-                        for(JsonElement doc : taskDocuments){
-                            JsonObject taskFields = doc.getAsJsonObject().getAsJsonObject("fields");
-
-                            String assignedTo = getField(taskFields, "assignedTo");
-                            String status = getField(taskFields, "status");
-
-                            if (!status.equalsIgnoreCase("Complete") && !assignedTo.equalsIgnoreCase("Everyone")){
-                                pendingMap.put(assignedTo, pendingMap.getOrDefault(assignedTo, 0) + 1);
-                            }
-                        }
-                    }
-                }
+                List<UserRole> users = new ArrayList<>();
 
                 if (response.statusCode() == 200){
                     JsonObject root = JsonParser.parseString(response.body()).getAsJsonObject();
@@ -252,20 +193,19 @@ public class userstatuspage extends Application{
                             String fullPath = doc.getAsJsonObject().get("name").getAsString();
                             String id = fullPath.substring(fullPath.lastIndexOf("/") + 1);
                             String userName = getField(fields, "name");
-                            String userStatus = getField(fields, "status");
+                            String userRole = getField(fields, "role");
 
                             if (userName.equals("ADMIN")){
                                 continue;
                             }
 
-                            User user = new User(id, userName, userStatus);
-                            user.setPendingCount(pendingMap.getOrDefault(userName, 0));
+                            UserRole user = new UserRole(id, userName, userRole);
                             users.add(user);
                         }
                     }
                 }
                 Platform.runLater(()-> {
-                    statusList.getItems().setAll(users);
+                    roleList.getItems().setAll(users);
                 });
             } catch (Exception e){
                 e.printStackTrace();

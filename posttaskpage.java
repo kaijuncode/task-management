@@ -41,7 +41,7 @@ public class posttaskpage extends Application {
         gridpane.add(Name, 1, 1);
 
         //Contact Number
-        gridpane.add(new Label("Contact Number:"), 0, 2);
+        gridpane.add(new Label("Contact:"), 0, 2);
         TextField Contact = new TextField();
         gridpane.add(Contact, 1, 2);
 
@@ -52,7 +52,10 @@ public class posttaskpage extends Application {
 
         //Issue/Request
         gridpane.add(new Label("Issue/Request:"), 0, 4);
-        TextField IssueReq = new TextField();
+        TextArea IssueReq = new TextArea();
+        IssueReq.setPrefWidth(150);
+        IssueReq.setWrapText(true);
+        IssueReq.setPrefRowCount(2);
         gridpane.add(IssueReq, 1, 4);
 
         //PostBy
@@ -222,7 +225,8 @@ public class posttaskpage extends Application {
                                     continue;
                                 }
                                 String status = fields.getAsJsonObject("status").get("stringValue").getAsString();
-                                if (status.equalsIgnoreCase("OnSite") || status.equalsIgnoreCase("Block") || status.equalsIgnoreCase("OnLeave")){
+                                String role = fields.getAsJsonObject("role").get("stringValue").getAsString();
+                                if (status.equalsIgnoreCase("OnSite") || status.equalsIgnoreCase("Block") || status.equalsIgnoreCase("OnLeave") || role.equalsIgnoreCase("admin")){
                                     continue;
                                 }
                                 userName.add(name);
