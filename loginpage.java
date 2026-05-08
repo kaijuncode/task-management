@@ -237,7 +237,7 @@ public class loginpage extends Application{
                 .getAsString();
     }
 
-    public static void main(String[] args) {
-        launch();
+    public static void main(String[] args){
+        launch(args);
     }
 }
