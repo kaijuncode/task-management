@@ -9,15 +9,14 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.GridPane;
-import javafx.scene.paint.Color;
+import javafx.scene.layout.*;
 import javafx.stage.Stage;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 
 public class userrolepage extends Application{
     private ListView<UserRole> roleListRef;
+    private Stage userRoleStage;
     @Override
     public void start(Stage stage){
         BorderPane role = new BorderPane();
@@ -94,7 +93,24 @@ public class userrolepage extends Application{
     }
 
     public void editRoleWindow(UserRole user){
-        Stage stage = new Stage();
+        if (userRoleStage != null && userRoleStage.isShowing()){
+            Alert roleWarning = new Alert(Alert.AlertType.WARNING);
+            roleWarning.setTitle("Warning");
+            roleWarning.setHeaderText("Continue Edit or Close?");
+            roleWarning.setContentText("There is still a EditWindow open, pls complete this first.");
+            roleWarning.showAndWait();
+
+            userRoleStage.setIconified(false);
+            userRoleStage.toFront();
+            userRoleStage.requestFocus();
+            return;
+        }
+
+        userRoleStage = new Stage();
+
+        userRoleStage.setOnCloseRequest(e-> {
+            userRoleStage = null;
+        });
 
         VBox roleWindow = new VBox(10);
         roleWindow.setAlignment(Pos.CENTER);
@@ -108,15 +124,15 @@ public class userrolepage extends Application{
         admin.setMaxWidth(Double.MAX_VALUE);
         support.setMaxWidth(Double.MAX_VALUE);
 
-        admin.setOnAction(e -> editRole(user, "Admin", stage));
-        support.setOnAction(e -> editRole(user, "Support", stage));
+        admin.setOnAction(e -> editRole(user, "Admin", userRoleStage));
+        support.setOnAction(e -> editRole(user, "Support", userRoleStage));
 
         roleWindow.getChildren().addAll(title, admin, support);
 
         Scene scene = new Scene(roleWindow, 250, 200);
-        stage.setTitle("Edit Role");
-        stage.setScene(scene);
-        stage.show();
+        userRoleStage.setTitle("Edit Role");
+        userRoleStage.setScene(scene);
+        userRoleStage.show();
     }
 
     public void editRole(UserRole userRole, String newRole, Stage window){
@@ -218,8 +234,5 @@ public class userrolepage extends Application{
             return fields.getAsJsonObject(key).get("stringValue").getAsString();
         }
         return "";
-    }
-    public static void main(String[] args) {
-        launch();
     }
 }

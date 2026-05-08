@@ -18,6 +18,7 @@ import javafx.scene.layout.VBox;
 
 public class userstatuspage extends Application{
     private ListView<User> statusListRef;
+    private Stage statusStage;
     @Override
     public void start(Stage stage){
         BorderPane status = new BorderPane();
@@ -116,7 +117,22 @@ public class userstatuspage extends Application{
     }
 
     public void editStatusWindow(User user){
-        Stage stage = new Stage();
+        if (statusStage != null && statusStage.isShowing()){
+            Alert statusWarning = new Alert(Alert.AlertType.WARNING);
+            statusWarning.setHeaderText("Continue Edit or Close?");
+            statusWarning.setContentText("There is still a EditWindow open, pls complete this first.");
+            statusWarning.showAndWait();
+
+            statusStage.setIconified(false);
+            statusStage.toFront();
+            statusStage.requestFocus();
+            return;
+        }
+        statusStage = new Stage();
+
+        statusStage.setOnCloseRequest(e-> {
+            statusStage = null;
+        });
 
         VBox statusWindow = new VBox(10);
         statusWindow.setAlignment(Pos.CENTER);
@@ -134,17 +150,17 @@ public class userstatuspage extends Application{
         block.setMaxWidth(Double.MAX_VALUE);
         leave.setMaxWidth(Double.MAX_VALUE);
 
-        available.setOnAction(e -> editStatus(user, "Available", stage));
-        onsite.setOnAction(e -> editStatus(user, "OnSite", stage));
-        block.setOnAction(e -> editStatus(user, "Block", stage));
-        leave.setOnAction(e -> editStatus(user, "OnLeave", stage));
+        available.setOnAction(e -> editStatus(user, "Available", statusStage));
+        onsite.setOnAction(e -> editStatus(user, "OnSite", statusStage));
+        block.setOnAction(e -> editStatus(user, "Block", statusStage));
+        leave.setOnAction(e -> editStatus(user, "OnLeave", statusStage));
 
         statusWindow.getChildren().addAll(title, available, onsite, block, leave);
 
         Scene scene = new Scene(statusWindow, 250, 200);
-        stage.setTitle("Edit Status");
-        stage.setScene(scene);
-        stage.show();
+        statusStage.setTitle("Edit Status");
+        statusStage.setScene(scene);
+        statusStage.show();
     }
 
     public void editStatus(User user, String newStatus, Stage window){
@@ -278,8 +294,5 @@ public class userstatuspage extends Application{
             return fields.getAsJsonObject(key).get("stringValue").getAsString();
         }
         return "";
-    }
-    public static void main(String[] args) {
-        launch();
     }
 }

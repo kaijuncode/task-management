@@ -1,5 +1,6 @@
 import java.util.*;
 import java.time.*;
+import java.time.format.DateTimeFormatter;
 import javafx.util.Duration;
 import javafx.beans.binding.Bindings;
 
@@ -9,16 +10,10 @@ import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.application.Application;
 import javafx.application.Platform;
-import javafx.geometry.Insets;
-import javafx.geometry.Pos;
-import javafx.geometry.VPos;
+import javafx.geometry.*;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
-import javafx.scene.control.cell.PropertyValueFactory;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.GridPane;
-import javafx.scene.layout.VBox;
-import javafx.scene.layout.HBox;
+import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.stage.Stage;
@@ -29,6 +24,11 @@ import java.net.http.*;
 public class mainpage extends Application{ 
     private String lastUpdatedCache = "";
     private Filtermode currentMode = Filtermode.ALL;
+    private Stage postStage;
+    private Stage userStatusStage;
+    private Stage userRoleStage;
+    private Stage aboutStage;
+    private Stage updateStatusStage;
 
     enum Filtermode{
         ALL,
@@ -65,29 +65,61 @@ public class mainpage extends Application{
         //Post Task Page
         posttaskpage posttaskPage = new posttaskpage();
         post.setOnAction(e ->{
-            Stage newStage = new Stage();
-            posttaskPage.start(newStage);
+            if (postStage == null || !postStage.isShowing()){
+                postStage = new Stage();
+                posttaskPage.start(postStage);
+            }
+            else{
+                postStage.setIconified(false);
+                postStage.show();
+                postStage.toFront();
+                postStage.requestFocus();
+            }
         });
 
         //User Status Page
         userstatuspage userstatusPage = new userstatuspage();
         status.setOnAction(e-> {
-            Stage newStage = new Stage();
-            userstatusPage.start(newStage);
+            if (userStatusStage == null || !userStatusStage.isShowing()){
+                userStatusStage = new Stage();
+                userstatusPage.start(userStatusStage);
+            }
+            else{
+                userStatusStage.setIconified(false);
+                userStatusStage.show();
+                userStatusStage.toFront();
+                userStatusStage.requestFocus();
+            }
         });
 
         //User Role Page
         userrolepage userrolePage = new userrolepage();
         role.setOnAction(e-> {
-            Stage newStage = new Stage();
-            userrolePage.start(newStage);
+            if (userRoleStage == null || !userRoleStage.isShowing()){
+                userRoleStage = new Stage();
+                userrolePage.start(userRoleStage);
+            }
+            else{
+                userRoleStage.setIconified(false);
+                userRoleStage.show();
+                userRoleStage.toFront();
+                userRoleStage.requestFocus();
+            }
         });
 
         //About Page
         aboutpage aboutPage = new aboutpage(); 
         about.setOnAction(e ->{
-            Stage newStage = new Stage();
-            aboutPage.start(newStage);
+            if (aboutStage == null || !aboutStage.isShowing()){
+                aboutStage = new Stage();
+                aboutPage.start(aboutStage);
+            }
+            else{
+                aboutStage.setIconified(false);
+                aboutStage.show();
+                aboutStage.toFront();
+                aboutStage.requestFocus();
+            }
         });
 
         //Logout
@@ -240,6 +272,37 @@ public class mainpage extends Application{
         rightBox.setAlignment(Pos.CENTER);
         rightBox.setPrefWidth(100);
 
+        Label dateLabel = new Label(LocalDate.now().toString());
+
+        //Clock
+        Label clockLabel = new Label();
+        clockLabel.setStyle(
+            "-fx-font-size: 12px;" +
+            "-fx-font-weight: bold;" +
+            "-fx-text-fill: black;" +
+            "-fx-background-color: white;" +
+            "-fx-background-radius: 10;" +
+            "-fx-padding: 12px;"
+        );
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm:ss");
+        final boolean[] showColon = {true};
+        Timeline timeline = new Timeline(
+            new KeyFrame(Duration.seconds(1), e-> {
+                LocalTime now = LocalTime.now();
+                String time;
+                if (showColon[0]){
+                    time = now.format(formatter);
+                }
+                else{
+                    time = now.format(DateTimeFormatter.ofPattern("HH mm ss"));
+                }
+                clockLabel.setText(time);
+                showColon[0] = !showColon[0];
+            })
+        );
+        timeline.setCycleCount(Timeline.INDEFINITE);
+        timeline.play();
+
         //UserName
         Label nameLabel = new Label();
         Label roleLabel = new Label();
@@ -305,7 +368,7 @@ public class mainpage extends Application{
         nameLabel.setMaxWidth(rightBox.getPrefWidth());
         statusLabel.setMaxWidth(rightBox.getPrefWidth());
         statusBtn.setMaxWidth(rightBox.getPrefWidth());
-        rightBox.getChildren().addAll(nameLabel, roleLabel, statusLabel, statusBtn);
+        rightBox.getChildren().addAll(dateLabel, clockLabel, nameLabel, roleLabel, statusLabel, statusBtn);
         right.add(rightBox, 0, 0);
 
         //Bottom Area
@@ -500,8 +563,20 @@ public class mainpage extends Application{
         return "";
     }
 
+    //Update Status Window
     public void showUpdateStatus(){
-        Stage stage = new Stage();
+        if (updateStatusStage != null && updateStatusStage.isShowing()){
+            updateStatusStage.setIconified(false);
+            updateStatusStage.toFront();
+            updateStatusStage.requestFocus();
+            return;
+        }
+
+        updateStatusStage = new Stage();
+
+        updateStatusStage.setOnCloseRequest(e-> {
+            updateStatusStage = null;
+        });
 
         HBox btnBox = new HBox(10);
         btnBox.setAlignment(Pos.CENTER);
@@ -512,14 +587,25 @@ public class mainpage extends Application{
 
         btnBox.getChildren().addAll(avaBtn, siteBtn, blockBtn);
 
-        avaBtn.setOnAction(e-> {handleUpdateStatus("Available", stage);});
-        siteBtn.setOnAction(e-> {handleUpdateStatus("OnSite", stage);});
-        blockBtn.setOnAction(e-> {handleUpdateStatus("Block", stage);});
+        String detectStatus = UserSession.getInstance().getStatus();
+        if (detectStatus.equals("Available")){
+            avaBtn.setDisable(true);
+        }
+        if (detectStatus.equals("OnSite")){
+            siteBtn.setDisable(true);
+        }
+        if (detectStatus.equals("Block")){
+            blockBtn.setDisable(true);
+        }
+
+        avaBtn.setOnAction(e-> {handleUpdateStatus("Available", updateStatusStage);});
+        siteBtn.setOnAction(e-> {handleUpdateStatus("OnSite", updateStatusStage);});
+        blockBtn.setOnAction(e-> {handleUpdateStatus("Block", updateStatusStage);});
 
         Scene scene = new Scene(btnBox, 300, 200);
-        stage.setTitle("Update Status");
-        stage.setScene(scene);
-        stage.show();
+        updateStatusStage.setTitle("Update Status");
+        updateStatusStage.setScene(scene);
+        updateStatusStage.show();
     }
 
     private void handleUpdateStatus(String newStatus, Stage stage){

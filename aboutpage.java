@@ -1,11 +1,8 @@
 import javafx.application.Application;
 import javafx.geometry.Insets;
-import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.GridPane;
-import javafx.scene.paint.Color;
+import javafx.scene.layout.*;
 import javafx.stage.Stage;
 import javafx.scene.layout.VBox;
 
@@ -27,9 +24,5 @@ public class aboutpage extends Application{
         stage.setTitle("About");
         stage.setScene(scene);
         stage.show();
-    }
-    
-    public static void main(String[] args) {
-        launch();
     }
 }

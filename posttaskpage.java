@@ -301,7 +301,4 @@ public class posttaskpage extends Application {
         HttpClient client = HttpClient.newHttpClient();
         client.send(request, HttpResponse.BodyHandlers.ofString()); 
     }
-    public static void main(String[] args) {
-        launch();
-    }
 }

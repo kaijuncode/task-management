@@ -1,9 +1,3 @@
-import javafx.animation.KeyFrame;
-import javafx.animation.Timeline;
-import javafx.util.*;
-
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -14,11 +8,8 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
-import javafx.scene.control.Alert.AlertType;
 import javafx.stage.Stage;
-import javafx.scene.image.*;
 import javafx.scene.layout.*;
-import javafx.scene.text.Text;
 
 import java.net.URI;
 import java.net.http.*;
@@ -26,6 +17,8 @@ import com.google.gson.*;
 
 public class detailpage extends Application{
     private Task task;
+    private Stage transferStage;
+    private Stage assignStage;
 
     public detailpage(Task task){
         this.task = task;
@@ -300,12 +293,22 @@ public class detailpage extends Application{
     public void assignTask(Task task){
         posttaskpage post = new posttaskpage();
 
-        Stage stage = new Stage();
+        assignStage = new Stage();
+
+        assignStage.setOnCloseRequest(e-> {
+            assignStage = null;
+        });
         
         GridPane assignPane = new GridPane();
         assignPane.setHgap(10);
         assignPane.setVgap(10);
         assignPane.setAlignment(Pos.CENTER);
+
+        HBox taskassignBox = new HBox();
+        taskassignBox.setPrefWidth(300);
+        taskassignBox.setAlignment(Pos.CENTER);
+        Label taskAssign = new Label("Task " + task.getCompanyName() + " assign to?");
+        taskassignBox.getChildren().addAll(taskAssign);
 
         HBox assignBox = new HBox(10);
         assignBox.setPrefWidth(300); 
@@ -313,18 +316,17 @@ public class detailpage extends Application{
         Label assignLabel = new Label("Assign To:");
         ComboBox<String> userList = new ComboBox<>();
         post.loadUsersfromFirebase(userList);
-
         assignBox.getChildren().addAll(assignLabel, userList);
 
         HBox btnBox = new HBox();
         btnBox.setPrefWidth(300); 
         btnBox.setAlignment(Pos.CENTER);
         Button assignBtn = new Button("Assign");
-
         btnBox.getChildren().addAll(assignBtn);
 
-        assignPane.add(assignBox, 0, 0);
-        assignPane.add(btnBox, 0, 1);
+        assignPane.add(taskassignBox, 0, 0);
+        assignPane.add(assignBox, 0, 1);
+        assignPane.add(btnBox, 0, 2);
 
         assignBtn.setOnAction(e-> {
             String newAssign = userList.getValue();
@@ -374,7 +376,7 @@ public class detailpage extends Application{
                                 ex.printStackTrace();
                             }
                         }).start();
-                        stage.close();
+                        assignStage.close();
                     });
 
                 } catch (Exception ex){
@@ -384,19 +386,29 @@ public class detailpage extends Application{
         });
         
         Scene scene = new Scene(assignPane, 300, 200);
-        stage.setTitle("Assign Task");
-        stage.setScene(scene);
-        stage.show();
+        assignStage.setTitle("Assign Task");
+        assignStage.setScene(scene);
+        assignStage.show();
     }
 
     //Transfer Task to Others
     public void transferTask(Task task){
-        Stage stage = new Stage();
+        transferStage = new Stage();
+
+        transferStage.setOnCloseRequest(e-> {
+            transferStage = null;
+        });
 
         GridPane transferPane = new GridPane();
         transferPane.setHgap(10);
         transferPane.setVgap(10);
         transferPane.setAlignment(Pos.CENTER);
+
+        HBox transfertoBox = new HBox();
+        transfertoBox.setPrefWidth(300);
+        transfertoBox.setAlignment(Pos.CENTER);
+        Label transferTo = new Label("Task " + task.getCompanyName() + " transfer to?");
+        transfertoBox.getChildren().addAll(transferTo);
 
         HBox transferBox = new HBox(10);
         transferBox.setPrefWidth(300);
@@ -412,8 +424,9 @@ public class detailpage extends Application{
         Button transferBtn = new Button("Transfer");
         btnBox.getChildren().addAll(transferBtn);
 
-        transferPane.add(transferBox, 0, 0);
-        transferPane.add(btnBox, 0, 1);
+        transferPane.add(transfertoBox, 0, 0);
+        transferPane.add(transferBox, 0, 1);
+        transferPane.add(btnBox, 0, 2);
 
         transferBtn.setOnAction(e-> {
             String newTransfer = userList.getValue();
@@ -456,7 +469,7 @@ public class detailpage extends Application{
                                 ex.printStackTrace();
                             }
                         }).start();
-                        stage.close();
+                        transferStage.close();
                     });
 
                 } catch (Exception ex){
@@ -466,9 +479,9 @@ public class detailpage extends Application{
         });
 
         Scene scene = new Scene(transferPane, 300, 200);
-        stage.setTitle("Transfer Task");
-        stage.setScene(scene);
-        stage.show();
+        transferStage.setTitle("Transfer Task");
+        transferStage.setScene(scene);
+        transferStage.show();
     }
 
     //User List for Transfer Task
@@ -549,9 +562,5 @@ public class detailpage extends Application{
                 e.printStackTrace();
             }
         }).start();
-    }
-
-    public static void main(String[] args) {
-        launch(args);
     }
 }
