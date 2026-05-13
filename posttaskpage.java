@@ -14,7 +14,6 @@ import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.stage.Stage;
-import javafx.scene.image.*;
 import javafx.scene.layout.*;
 
 import java.net.URI;
@@ -59,25 +58,11 @@ public class posttaskpage extends Application {
         gridpane.add(IssueReq, 1, 4);
 
         //PostBy
-        Image icon_wrench = new Image("image/icon_wrench.png");
-        ImageView wrench = new ImageView(icon_wrench);
-        wrench.setFitWidth(10);
-        wrench.setFitHeight(10);
         gridpane.add(new Label("Post By:"), 2, 0);
         TextField Post = new TextField();
         Post.setText(UserSession.getInstance().getName());
         Post.setDisable(true);
         gridpane.add(Post, 3, 0);
-        Button change = new Button("", wrench);
-        gridpane.add(change, 4, 0);
-        change.setOnAction(e-> {
-            if (Post.isDisable()){
-                Post.setDisable(false);
-            }
-            else{
-                Post.setDisable(true);
-            }
-        });
 
         //Assigned To
         gridpane.add(new Label("Assigned To:"), 2, 1);

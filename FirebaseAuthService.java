@@ -17,12 +17,10 @@ class AuthResult{
     }
 }
 public class FirebaseAuthService {
-    // 替换成你的 Firebase Web API Key
     private static final String API_KEY = "AIzaSyCF5p3akP5tDysrpnrYzUaU1tU_vQ-t91U";
     private static final String AUTH_URL = "https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=" + API_KEY; 
 
     public AuthResult login(String email, String password) throws Exception {
-        // 构建请求体 (JSON 格式)
         String jsonPayload = String.format(
             "{\"email\":\"%s\",\"password\":\"%s\",\"returnSecureToken\":true}", 
             email, password
@@ -47,6 +45,7 @@ public class FirebaseAuthService {
             return new AuthResult(uid, idToken, userEmail);
 
         } else {
+            System.out.println(response.body());
             throw new RuntimeException("Login Failed: " + response.body());
         }
     }

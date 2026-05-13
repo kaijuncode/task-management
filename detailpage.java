@@ -25,6 +25,7 @@ public class detailpage extends Application{
     }
     @Override
     public void start(Stage stage){
+        TaskService ts = new TaskService();
         //To Update Last Updated Time
         posttaskpage ptp = new posttaskpage();
 
@@ -185,8 +186,8 @@ public class detailpage extends Application{
 
             Optional<ButtonType> result = confirm.showAndWait();
             if (result.isPresent() && result.get() == ButtonType.OK){
-                acceptTask(task);
                 try{
+                    ts.acceptTask(task);
                     ptp.updateLastUpdated();
                 } catch (Exception ex){
                     ex.printStackTrace();
@@ -238,8 +239,8 @@ public class detailpage extends Application{
 
             Optional<ButtonType> result = confirm.showAndWait();
             if (result.isPresent() && result.get() == ButtonType.OK){
-                doneTask(task);
                 try{
+                    ts.doneTask(task);
                     ptp.updateLastUpdated();
                 } catch (Exception ex){
                     ex.printStackTrace();
@@ -257,41 +258,10 @@ public class detailpage extends Application{
         stage.show();
     }
 
-    //Assign Task to Current User
-    public void acceptTask(Task task){
-        new Thread(()-> {
-            try {
-                String projectId = "task-management-86056";
-                String idToken = UserSession.getInstance().getidToken();
-                String currentUser = UserSession.getInstance().getName();
-
-                String url = "https://firestore.googleapis.com/v1/projects/" + projectId + "/databases/(default)/documents/tasks/" + task.getId() + "?updateMask.fieldPaths=assignedTo";
-
-                String json = "{ \"fields\": { " +
-                    "\"assignedTo\": { \"stringValue\": \"" + currentUser + "\" } " +
-                    "} }";
-
-                HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(url))
-                    .method("PATCH", HttpRequest.BodyPublishers.ofString(json))
-                    .header("Content-Type", "application/json")
-                    .header("Authorization", "Bearer " + idToken)
-                    .build();
-
-                HttpClient client = HttpClient.newHttpClient();
-                HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-
-                System.out.println(response.body());
-
-            } catch (Exception e){
-                e.printStackTrace();
-            }
-        }).start();
-    }
-
     //Assign Pending Task to Someone
     public void assignTask(Task task){
         posttaskpage post = new posttaskpage();
+        TaskService ts = new TaskService();
 
         assignStage = new Stage();
 
@@ -346,26 +316,7 @@ public class detailpage extends Application{
             }
             new Thread(()-> {
                 try{
-                    String projectId = "task-management-86056";
-                    String idToken = UserSession.getInstance().getidToken();
-
-                    String url = "https://firestore.googleapis.com/v1/projects/" + projectId + "/databases/(default)/documents/tasks/" + task.getId() + "?updateMask.fieldPaths=assignedTo";
-
-                    String json = "{ \"fields\": { " +
-                        "\"assignedTo\": { \"stringValue\": \""+ newAssign +"\" } " +
-                        "} }";
-
-                    HttpRequest request = HttpRequest.newBuilder()
-                        .uri(URI.create(url))
-                        .method("PATCH", HttpRequest.BodyPublishers.ofString(json))
-                        .header("Content-Type", "application/json")
-                        .header("Authorization", "Bearer " + idToken)
-                        .build();
-
-                    HttpClient client = HttpClient.newHttpClient();
-                    HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-
-                    System.out.println(response.body());
+                    ts.assignTask(task, newAssign);
 
                     Platform.runLater(()->{
                         posttaskpage ptp = new posttaskpage();
@@ -393,6 +344,7 @@ public class detailpage extends Application{
 
     //Transfer Task to Others
     public void transferTask(Task task){
+        TaskService ts = new TaskService();
         transferStage = new Stage();
 
         transferStage.setOnCloseRequest(e-> {
@@ -439,27 +391,7 @@ public class detailpage extends Application{
             }
             new Thread(()-> {
                 try{
-                    String projectId = "task-management-86056";
-                    String idToken = UserSession.getInstance().getidToken();
-
-                    String url = "https://firestore.googleapis.com/v1/projects/" + projectId + "/databases/(default)/documents/tasks/" + task.getId() + "?updateMask.fieldPaths=assignedTo";
-
-                    String json = "{ \"fields\": { " +
-                        "\"assignedTo\": { \"stringValue\": \""+ newTransfer +"\" } " +
-                        "} }";
-
-                    HttpRequest request = HttpRequest.newBuilder()
-                        .uri(URI.create(url))
-                        .method("PATCH", HttpRequest.BodyPublishers.ofString(json))
-                        .header("Content-Type", "application/json")
-                        .header("Authorization", "Bearer " + idToken)
-                        .build();
-
-                    HttpClient client = HttpClient.newHttpClient();
-                    HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-
-                    System.out.println(response.body());
-
+                    ts.transferTask(task, newTransfer);
                     Platform.runLater(()->{
                         posttaskpage ptp = new posttaskpage();
                         new Thread(()-> {
@@ -527,37 +459,6 @@ public class detailpage extends Application{
                     userList.getItems().addAll(userName);
                     userList.getSelectionModel().selectFirst();
                 });
-            } catch (Exception e){
-                e.printStackTrace();
-            }
-        }).start();
-    }
-
-    //Complete Task and Update Task Status
-    public void doneTask(Task task){
-        new Thread(()-> {
-            try {
-                String projectId = "task-management-86056";
-                String idToken = UserSession.getInstance().getidToken();
-
-                String url = "https://firestore.googleapis.com/v1/projects/" + projectId + "/databases/(default)/documents/tasks/" + task.getId() + "?updateMask.fieldPaths=status";
-
-                String json = "{ \"fields\": { " +
-                    "\"status\": { \"stringValue\": \"Complete\" } " +
-                    "} }";
-
-                HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(url))
-                    .method("PATCH", HttpRequest.BodyPublishers.ofString(json))
-                    .header("Content-Type", "application/json")
-                    .header("Authorization", "Bearer " + idToken)
-                    .build();
-
-                HttpClient client = HttpClient.newHttpClient();
-                HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-
-                System.out.println(response.body());
-
             } catch (Exception e){
                 e.printStackTrace();
             }

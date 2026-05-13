@@ -3,9 +3,6 @@ import java.time.*;
 import java.time.format.DateTimeFormatter;
 import javafx.util.Duration;
 import javafx.beans.binding.Bindings;
-
-import com.google.gson.*;
-
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.application.Application;
@@ -17,9 +14,7 @@ import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.stage.Stage;
-
-import java.net.URI;
-import java.net.http.*;
+import javafx.stage.Window;
 
 public class mainpage extends Application{ 
     private String lastUpdatedCache = "";
@@ -29,6 +24,7 @@ public class mainpage extends Application{
     private Stage userRoleStage;
     private Stage aboutStage;
     private Stage updateStatusStage;
+    TaskService ts = new TaskService();
 
     enum Filtermode{
         ALL,
@@ -133,7 +129,13 @@ public class mainpage extends Application{
             Optional<ButtonType> result = LOGOUT.showAndWait();
 
             if (result.isPresent() && result.get() == ButtonType.OK){
-                stage1.close();
+                List<Window> windows = new ArrayList<>(Window.getWindows());
+                for (Window window : windows){
+                    if (window instanceof Stage){
+                        ((Stage) window).close();
+                    }
+                }
+                UserSession.getInstance().clear();
                 Stage newStage = new Stage();
                 loginPage.start(newStage);
             }
@@ -248,7 +250,7 @@ public class mainpage extends Application{
         Timeline refresh = new Timeline(
         new KeyFrame(Duration.seconds(5), e -> {
             try{
-                String lastest = getLastUpdated();
+                String lastest = ts.getLastUpdated();
 
                 if (!lastest.equals(lastUpdatedCache)){
                     lastUpdatedCache = lastest;
@@ -440,127 +442,56 @@ public class mainpage extends Application{
         stage1.show();
     }
 
-    //Get Task Last Updated
-    public String getLastUpdated() throws Exception{
-        String projectId = "task-management-86056";
-        String idToken = UserSession.getInstance().getidToken();
-
-        String url = "https://firestore.googleapis.com/v1/projects/" + projectId + "/databases/(default)/documents/system/meta";
-
-        HttpRequest request = HttpRequest.newBuilder()
-            .uri(URI.create(url))
-            .header("Authorization", "Bearer " + idToken)
-            .GET()
-            .build();
-
-        HttpClient client = HttpClient.newHttpClient();
-        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-
-        if (response.statusCode() != 200){
-            throw new Exception("Failed to get lastUpdated");
-        }
-
-        JsonObject root = JsonParser.parseString(response.body()).getAsJsonObject();
-
-        return root.getAsJsonObject("fields")
-            .getAsJsonObject("lastUpdated")
-            .get("timestampValue")
-            .getAsString();
-    }
-
     //Load Task
     public void loadTasks(ListView<Task> table, Filtermode mode){
         new Thread(() ->{
             try{
-                String projectId = "task-management-86056";
-                String idToken = UserSession.getInstance().getidToken();
-                String currentUser = UserSession.getInstance().getName();
+                //Task Service - Get Task
+                TaskService ts = new TaskService();
+                List<Task> tasks = ts.getTasks();
+                List<Task> filterTasks = new ArrayList<>();
 
-                String url = "https://firestore.googleapis.com/v1/projects/" + projectId + "/databases/(default)/documents/tasks";
-
-                HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(url))
-                    .header("Authorization", "Bearer " + idToken)
-                    .GET()
-                    .build();
-                
-                HttpClient client = HttpClient.newHttpClient();
-                HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-
-                List<Task> tasks = new ArrayList<>();
-
-                if (response.statusCode() == 200){
-                    JsonObject root = JsonParser.parseString(response.body()).getAsJsonObject();
-
-                    if (root.has("documents")){
-                        JsonArray documents = root.getAsJsonArray("documents");
-
-                        for (JsonElement doc : documents){
-                            JsonObject fields = doc.getAsJsonObject().getAsJsonObject("fields");
-
-                            String fullPath = doc.getAsJsonObject().get("name").getAsString();
-                            String id = fullPath.substring(fullPath.lastIndexOf("/") + 1);
-                            String companyName = getField(fields, "company");
-                            String customerName = getField(fields, "customer");
-                            String contactNumber = getField(fields, "contact");
-                            String software = getField(fields, "software");
-                            String issue = getField(fields, "issue");
-                            String postBy = getField(fields, "postBy");
-                            String assignedTo = getField(fields, "assignedTo");
-                            String method = getField(fields, "method");
-                            String email = getField(fields, "emailVal");
-                            boolean urgent = fields.has("urgent") && fields.getAsJsonObject("urgent").get("booleanValue").getAsBoolean();
-                            String createTime = getField(fields, "createTime");
-                            String status = getField(fields, "status");
-
-                            //Filter Task (My Pending Task)
-                            if (mode == Filtermode.MY_TASK){
-                                if (!assignedTo.equalsIgnoreCase(currentUser)){
-                                    continue;
-                                }
-                            }
-
-                            //Filter Task (Complete Task)
-                            if (mode == Filtermode.COMPLETE){
-                                if (!status.equalsIgnoreCase("Complete")){
-                                    continue;
-                                }
-                            }
-
-                            //Filter Task (All Pending Task)
-                            if (mode == Filtermode.ALL){
-                                if (status.equalsIgnoreCase("Complete")){
-                                    continue;
-                                }
-                            }
-                            Task task = new Task(id, companyName, customerName, contactNumber, software, issue, postBy, assignedTo, method, email, urgent, createTime, status);
-                            tasks.add(task);
+                //Filter Task
+                for (Task task : tasks){
+                    //Filter Pending Task
+                    if (mode == Filtermode.ALL){
+                        if (task.getStatus().equalsIgnoreCase("COMPLETE")){
+                            continue;
                         }
                     }
+                    //Filter My Task
+                    if (mode == Filtermode.MY_TASK){
+                        if (!task.getAssignedTo().equals(UserSession.getInstance().getName())){
+                            continue;
+                        }
+                    }
+                    //Filter Complete Task
+                    if (mode == Filtermode.COMPLETE){
+                        if (!task.getStatus().equalsIgnoreCase("COMPLETE")){
+                            continue;
+                        }
+                    }
+                    filterTasks.add(task);
+                }
+                //Sort COMPLETE TASK
+                if (mode == Filtermode.COMPLETE){
+                    filterTasks.sort(Comparator.comparing(Task::getCreateDateTime));
+                }
+                //Sort MY TASK (Urgent->Pending->Complete)
+                else if (mode == Filtermode.MY_TASK){
+                    filterTasks.sort(Comparator.comparing((Task task) -> task.isUrgent()&&!task.getStatus().equalsIgnoreCase("Complete")).reversed().thenComparing(Task -> Task.getStatus().equalsIgnoreCase("Complete")).thenComparing(Task::getCreateDateTime));
+                }
+                //Sort PENDING TASK (Urgent->Pending)
+                else{
+                    filterTasks.sort(Comparator.comparing(Task::isUrgent).reversed().thenComparing(Task::getCreateDateTime));
                 }
                 Platform.runLater(() ->{
-                    if (mode == Filtermode.COMPLETE){
-                        tasks.sort(Comparator.comparing(Task::getCreateDateTime));
-                    }
-                    else if (mode == Filtermode.MY_TASK){
-                        tasks.sort(Comparator.comparing((Task task) -> task.isUrgent()&&!task.getStatus().equalsIgnoreCase("Complete")).reversed().thenComparing(Task -> Task.getStatus().equalsIgnoreCase("Complete")).thenComparing(Task::getCreateDateTime));
-                    }
-                    else {
-                        tasks.sort(Comparator.comparing(Task::isUrgent).reversed().thenComparing(Task::getCreateDateTime));
-                    }
-                    table.getItems().setAll(tasks);
+                    table.getItems().setAll(filterTasks);
                 });
             } catch (Exception e){
                 e.printStackTrace();
             }
         }).start();
-    }
-
-    private String getField(JsonObject fields, String key){
-        if (fields.has(key)){
-            return fields.getAsJsonObject(key).get("stringValue").getAsString();
-        }
-        return "";
     }
 
     //Update Status Window
@@ -607,8 +538,7 @@ public class mainpage extends Application{
         updateStatusStage.setScene(scene);
         updateStatusStage.show();
     }
-
-    private void handleUpdateStatus(String newStatus, Stage stage){
+    public void handleUpdateStatus(String newStatus, Stage stage){
         new Thread(() ->{
             try{
                 UserSession session = UserSession.getInstance();
