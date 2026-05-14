@@ -1,11 +1,10 @@
+import java.util.*;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.util.*;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.List;
 
 import javafx.application.Application;
 import javafx.application.Platform;
@@ -15,10 +14,6 @@ import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.stage.Stage;
 import javafx.scene.layout.*;
-
-import java.net.URI;
-import java.net.http.*;
-import com.google.gson.*;
 
 public class posttaskpage extends Application {
     private boolean Urgent = false;
@@ -137,12 +132,14 @@ public class posttaskpage extends Application {
             String emailVal = emailInt.getText();
             String status = "Pending";
             String createTime = LocalDateTime.now().format(formatter);
+            String progress = "Pending";
 
             new Thread(() ->{
                 try{
                     //Post Task to Firestore
-                    createTask(company,customer,contact,software,issue,postBy,assignedTo,method,emailVal,Urgent,createTime,status);
-                    updateLastUpdated();
+                    TaskService ts = new TaskService();
+                    ts.createTask(company,customer,contact,software,issue,postBy,assignedTo,method,emailVal,Urgent,createTime,status,progress);
+                    ts.updateLastUpdated();
                     Platform.runLater(() ->{
                         cmyName.clear();
                         Name.clear();
@@ -183,107 +180,15 @@ public class posttaskpage extends Application {
     public void loadUsersfromFirebase(ComboBox<String> userList){
         new Thread(() ->{
             try{
-                String projectId = "task-management-86056";
-                String idToken = UserSession.getInstance().getidToken();
-
-                String url = "https://firestore.googleapis.com/v1/projects/" + projectId + "/databases/(default)/documents/users";
-
-                HttpRequest request = HttpRequest.newBuilder().uri(URI.create(url)).GET().header("Authorization", "Bearer " + idToken).build();
-        
-                HttpClient client = HttpClient.newHttpClient();
-                HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-
-                List<String> userName = new ArrayList<>();
-                userName.add("Everyone");
-
-                if (response.statusCode() == 200){
-                    JsonObject root = JsonParser.parseString(response.body()).getAsJsonObject();
-
-                    if (root.has("documents")){
-                        JsonArray documents = root.getAsJsonArray("documents");
-                        for (JsonElement doc : documents){
-                            JsonObject fields = doc.getAsJsonObject().getAsJsonObject("fields");
-                    
-                            if (fields.has("name")){
-                                String name = fields.getAsJsonObject("name").get("stringValue").getAsString();
-                                if (name.equals("ADMIN")){
-                                    continue;
-                                }
-                                String status = fields.getAsJsonObject("status").get("stringValue").getAsString();
-                                String role = fields.getAsJsonObject("role").get("stringValue").getAsString();
-                                if (status.equalsIgnoreCase("OnSite") || status.equalsIgnoreCase("Block") || status.equalsIgnoreCase("OnLeave") || role.equalsIgnoreCase("admin")){
-                                    continue;
-                                }
-                                userName.add(name);
-                            }
-                        }
-                    }
-                }
+                TaskService ts = new TaskService();
+                List<String> users = ts.getUserList();
                 Platform.runLater(() -> {
-                    userList.getItems().addAll(userName);
+                    userList.getItems().addAll(users);
                     userList.getSelectionModel().selectFirst();
                 });
             } catch (Exception e){
                 e.printStackTrace();
             }
         }).start();
-    }
-
-    //Create Task
-    public void createTask(String company, String customer, String contact, String software, String issue, String postBy, String assignedTo, String method, String emailVal, boolean urgent, String createTime, String status) throws Exception{
-        String projectId = "task-management-86056";
-        String idToken = UserSession.getInstance().getidToken();
-
-        String url = "https://firestore.googleapis.com/v1/projects/" + projectId + "/databases/(default)/documents/tasks";
-
-        String json = "{ \"fields\": { " +
-                "\"company\": { \"stringValue\": \"" + company + "\" }, " +
-                "\"customer\": { \"stringValue\": \"" + customer + "\" }, " +
-                "\"contact\": { \"stringValue\": \"" + contact + "\" }, " +
-                "\"software\": { \"stringValue\": \"" + software + "\" }, " +
-                "\"issue\": { \"stringValue\": \"" + issue + "\" }, " +
-                "\"postBy\": { \"stringValue\": \"" + postBy + "\" }, " +
-                "\"assignedTo\": { \"stringValue\": \"" + assignedTo + "\" }, " +
-                "\"method\": { \"stringValue\": \"" + method + "\" }, " +
-                "\"emailVal\": { \"stringValue\": \"" + emailVal + "\" }, " +
-                "\"urgent\": { \"booleanValue\": " + urgent + " }, " +
-                "\"createTime\": { \"stringValue\": \"" + createTime + "\" }, " +
-                "\"status\": { \"stringValue\": \"" + status + "\" }" +
-                "} }";
-
-        HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(url))
-                .POST(HttpRequest.BodyPublishers.ofString(json))
-                .header("Content-Type", "application/json")
-                .header("Authorization", "Bearer " + idToken)
-                .build();
-
-        HttpClient client = HttpClient.newHttpClient();
-        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-        
-        if (response.statusCode() != 200) {
-        throw new RuntimeException("Create Task Failed: " + response.body());
-        }
-    }
-
-    public void updateLastUpdated() throws Exception{
-        String projectId = "task-management-86056";
-        String idToken = UserSession.getInstance().getidToken();
-
-        String url = "https://firestore.googleapis.com/v1/projects/" + projectId + "/databases/(default)/documents/system/meta";
-
-        String json = "{ \"fields\": { " +
-        "\"lastUpdated\": { \"timestampValue\": \"" + java.time.Instant.now().toString() + "\" }" +
-        "} }";
-
-        HttpRequest request = HttpRequest.newBuilder()
-            .uri(URI.create(url))
-            .method("PATCH", HttpRequest.BodyPublishers.ofString(json))
-            .header("Content-Type", "application.json")
-            .header("Authorization","Bearer " + idToken)
-            .build();
-
-        HttpClient client = HttpClient.newHttpClient();
-        client.send(request, HttpResponse.BodyHandlers.ofString()); 
     }
 }

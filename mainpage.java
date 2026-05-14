@@ -24,6 +24,7 @@ public class mainpage extends Application{
     private Stage userRoleStage;
     private Stage aboutStage;
     private Stage updateStatusStage;
+    private Stage productStage;
     TaskService ts = new TaskService();
 
     enum Filtermode{
@@ -42,6 +43,7 @@ public class mainpage extends Application{
         //Administrator Menu Item
         MenuItem status = new MenuItem("User Status");
         MenuItem role = new MenuItem("User Role");
+        MenuItem product = new MenuItem("Product List");
 
         //Help Menu Item
         MenuItem about = new MenuItem("About");
@@ -51,7 +53,7 @@ public class mainpage extends Application{
         Menu taskMenu = new Menu("Task");
         taskMenu.getItems().addAll(post);
         Menu adminMenu = new Menu("Administrator Tool");
-        adminMenu.getItems().addAll(status, role);
+        adminMenu.getItems().addAll(status, role, product);
         Menu helpMenu = new Menu("Help");
         helpMenu.getItems().addAll(about,logout,exit);
 
@@ -100,6 +102,20 @@ public class mainpage extends Application{
                 userRoleStage.show();
                 userRoleStage.toFront();
                 userRoleStage.requestFocus();
+            }
+        });
+
+        productpage productPage = new productpage();
+        product.setOnAction(e-> {
+            if (productStage == null || !productStage.isShowing()){
+                productStage = new Stage();
+                productPage.start(productStage);
+            }
+            else{
+                productStage.setIconified(false);
+                productStage.show();
+                productStage.toFront();
+                productStage.requestFocus();
             }
         });
 
@@ -154,6 +170,20 @@ public class mainpage extends Application{
                 System.exit(0);
             }
         });
+        stage1.setOnCloseRequest(e-> {
+            e.consume();
+
+            Alert EXIT = new Alert(Alert.AlertType.CONFIRMATION);
+            EXIT.setTitle("EXIT");
+            EXIT.setHeaderText("Exit?");
+            EXIT.setContentText("Click OK will close this application.");
+
+            Optional<ButtonType> result = EXIT.showAndWait();
+
+            if (result.isPresent() && result.get() == ButtonType.OK){
+                System.exit(0);
+            }
+        });
 
         //Center Area - Pending Case
         ListView<Task> table = new ListView<>();
@@ -187,9 +217,14 @@ public class mainpage extends Application{
                     Label CustomerName = new Label("Name: " + task.getCustomerName());
                     Label ContactNumber = new Label("Contact Number: " + task.getContactNumber());
                     Label Software = new Label("Software: " + task.getSoftware());
+                    Label Issue = new Label("Issue: " + task.getIssue());
+                    Label taskProgress = new Label("Ticket Status: " + task.getProgress());
                     Label Time = new Label(task.getCreateTime());
+                    Time.setStyle(
+                        "-fx-font-weight: bold;"
+                    );
                     //The Person in Charge or Pending
-                    Label pic = new Label("The Person in Charge");
+                    Label pic = new Label("Ticket PIC");
                     Label taskStatus = new Label("");
                     taskStatus.setAlignment(Pos.CENTER);
                     if (!task.getAssignedTo().equals("Everyone")) {
@@ -201,15 +236,15 @@ public class mainpage extends Application{
                     }
                     
                     VBox cardBox1 = new VBox(3);
-                    cardBox1.setPrefWidth(200);
-                    cardBox1.getChildren().addAll(CompanyName, CustomerName);
+                    cardBox1.setPrefWidth(170);
+                    cardBox1.getChildren().addAll(Time, CustomerName, ContactNumber);
                     VBox cardBox2 = new VBox(3);
-                    cardBox2.setPrefWidth(170);
-                    cardBox2.getChildren().addAll(ContactNumber, Software);
+                    cardBox2.setPrefWidth(225);
+                    cardBox2.getChildren().addAll(CompanyName, Software, Issue);
                     VBox cardBox3 = new VBox(3);
-                    cardBox3.setPrefWidth(150);
+                    cardBox3.setPrefWidth(130);
                     cardBox3.setAlignment(Pos.CENTER);
-                    cardBox3.getChildren().addAll(pic, taskStatus);
+                    cardBox3.getChildren().addAll(taskProgress, pic, taskStatus);
 
                     //Urgent - Red Background
                     if (task.isUrgent()){
@@ -231,10 +266,9 @@ public class mainpage extends Application{
                         );
                     }
 
-                    card.add(Time, 0, 0);
-                    card.add(cardBox1, 0, 1);
-                    card.add(cardBox2, 1, 1);
-                    card.add(cardBox3, 2, 1);
+                    card.add(cardBox1, 0, 0);
+                    card.add(cardBox2, 1, 0);
+                    card.add(cardBox3, 2, 0);
                     setGraphic(card);
 
                     //See Task Detail

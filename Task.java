@@ -15,8 +15,9 @@ public class Task {
     private boolean urgent;
     private String createTime;
     private String status;
+    private String progress;
 
-    public Task(String id, String companyName, String customerName, String contactNumber, String software, String issue, String postBy, String assignedTo, String method, String email, boolean urgent, String createTime, String status) {
+    public Task(String id, String companyName, String customerName, String contactNumber, String software, String issue, String postBy, String assignedTo, String method, String email, boolean urgent, String createTime, String status, String progress) {
         this.id = id;
         this.companyName = companyName;
         this.customerName = customerName;
@@ -30,6 +31,7 @@ public class Task {
         this.urgent = urgent;
         this.createTime = createTime;
         this.status = status;
+        this.progress = progress;
     }
 
     public String getId() {
@@ -82,6 +84,10 @@ public class Task {
 
     public String getStatus() {
         return status;
+    }
+
+    public String getProgress() {
+        return progress;
     }
 
     public LocalDateTime getCreateDateTime() {

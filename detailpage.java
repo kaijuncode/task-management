@@ -1,4 +1,3 @@
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -11,10 +10,6 @@ import javafx.scene.control.*;
 import javafx.stage.Stage;
 import javafx.scene.layout.*;
 
-import java.net.URI;
-import java.net.http.*;
-import com.google.gson.*;
-
 public class detailpage extends Application{
     private Task task;
     private Stage transferStage;
@@ -26,8 +21,6 @@ public class detailpage extends Application{
     @Override
     public void start(Stage stage){
         TaskService ts = new TaskService();
-        //To Update Last Updated Time
-        posttaskpage ptp = new posttaskpage();
 
         GridPane gridpane = new GridPane();
         gridpane.setHgap(10);
@@ -188,7 +181,7 @@ public class detailpage extends Application{
             if (result.isPresent() && result.get() == ButtonType.OK){
                 try{
                     ts.acceptTask(task);
-                    ptp.updateLastUpdated();
+                    ts.updateLastUpdated();
                 } catch (Exception ex){
                     ex.printStackTrace();
                 }
@@ -241,7 +234,7 @@ public class detailpage extends Application{
             if (result.isPresent() && result.get() == ButtonType.OK){
                 try{
                     ts.doneTask(task);
-                    ptp.updateLastUpdated();
+                    ts.updateLastUpdated();
                 } catch (Exception ex){
                     ex.printStackTrace();
                 }
@@ -319,10 +312,9 @@ public class detailpage extends Application{
                     ts.assignTask(task, newAssign);
 
                     Platform.runLater(()->{
-                        posttaskpage ptp = new posttaskpage();
                         new Thread(()-> {
                             try{
-                                ptp.updateLastUpdated();
+                                ts.updateLastUpdated();
                             } catch (Exception ex){
                                 ex.printStackTrace();
                             }
@@ -393,10 +385,9 @@ public class detailpage extends Application{
                 try{
                     ts.transferTask(task, newTransfer);
                     Platform.runLater(()->{
-                        posttaskpage ptp = new posttaskpage();
                         new Thread(()-> {
                             try{
-                                ptp.updateLastUpdated();
+                                ts.updateLastUpdated();
                             } catch (Exception ex){
                                 ex.printStackTrace();
                             }
@@ -420,41 +411,8 @@ public class detailpage extends Application{
     public void loadUserForTransfer(ComboBox<String> userList){
         new Thread(()-> {
             try{
-                String projectId = "task-management-86056";
-                String idToken = UserSession.getInstance().getidToken();
-
-                String url = "https://firestore.googleapis.com/v1/projects/" + projectId + "/databases/(default)/documents/users";
-
-                HttpRequest request = HttpRequest.newBuilder().uri(URI.create(url)).GET().header("Authorization", "Bearer " + idToken).build();
-        
-                HttpClient client = HttpClient.newHttpClient();
-                HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-
-                List<String> userName = new ArrayList<>();
-                userName.add("Everyone");
-
-                if (response.statusCode() == 200){
-                    JsonObject root = JsonParser.parseString(response.body()).getAsJsonObject();
-
-                    if (root.has("documents")){
-                        JsonArray documents = root.getAsJsonArray("documents");
-                        for (JsonElement doc : documents){
-                            JsonObject fields = doc.getAsJsonObject().getAsJsonObject("fields");
-                    
-                            if (fields.has("name")){
-                                String name = fields.getAsJsonObject("name").get("stringValue").getAsString();
-                                if (name.equals("ADMIN") || name.equals(UserSession.getInstance().getName())){
-                                    continue;
-                                }
-                                String status = fields.getAsJsonObject("status").get("stringValue").getAsString();
-                                if (status.equalsIgnoreCase("OnSite") || status.equalsIgnoreCase("Block")){
-                                    continue;
-                                }
-                                userName.add(name);
-                            }
-                        }
-                    }
-                }
+                TaskService ts = new TaskService();
+                List<String> userName = ts.getDetailUserList();
                 Platform.runLater(() -> {
                     userList.getItems().addAll(userName);
                     userList.getSelectionModel().selectFirst();
