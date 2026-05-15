@@ -1,8 +1,4 @@
-import java.net.URI;
-import java.net.http.*;
 import java.util.*;
-import com.google.gson.*;
-
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.geometry.Insets;
@@ -136,38 +132,14 @@ public class userrolepage extends Application{
     }
 
     public void editRole(UserRole userRole, String newRole, Stage window){
+        AdministrationService as = new AdministrationService();
         new Thread(()->{
             try{
-                String projectID = "task-management-86056";
-                String idToken = UserSession.getInstance().getidToken();
-
-                String url = "https://firestore.googleapis.com/v1/projects/"
-                        + projectID + "/databases/(default)/documents/users/" + userRole.getId()
-                        + "?updateMask.fieldPaths=role"; 
-
-                String json = "{ \"fields\": { " +
-                        "\"role\": { \"stringValue\": \"" + newRole + "\" } " +
-                        "} }";
-
-                HttpRequest request = HttpRequest.newBuilder()
-                        .uri(URI.create(url))
-                        .method("PATCH", HttpRequest.BodyPublishers.ofString(json))
-                        .header("Content-Type", "application/json")
-                        .header("Authorization", "Bearer " + idToken)
-                        .build();
-
-                HttpClient client = HttpClient.newHttpClient();
-                HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-
-                if (response.statusCode() == 200){
-                    Platform.runLater(()-> {
-                        window.close();
-                        refreshRole();
-                    });
-                }
-                else{
-                    System.out.println(response.body());
-                }
+                as.updateUserRole(userRole, newRole);
+                Platform.runLater(()->{
+                    window.close();
+                    refreshRole();
+                });
             } catch (Exception e){
                 e.printStackTrace();
             }
@@ -179,47 +151,10 @@ public class userrolepage extends Application{
     }
 
     public void loadUserRole(ListView<UserRole> roleList){
+        AdministrationService as = new AdministrationService();
         new Thread(() ->{
             try{
-                String projectId = "task-management-86056";
-                String idToken = UserSession.getInstance().getidToken();
-
-                String url = "https://firestore.googleapis.com/v1/projects/" + projectId + "/databases/(default)/documents/users";
-
-                HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(url))
-                    .header("Authorization", "Bearer " + idToken)
-                    .GET()
-                    .build();
-
-                HttpClient client = HttpClient.newHttpClient();
-                HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-
-                List<UserRole> users = new ArrayList<>();
-
-                if (response.statusCode() == 200){
-                    JsonObject root = JsonParser.parseString(response.body()).getAsJsonObject();
-
-                    if (root.has("documents")){
-                        JsonArray documents = root.getAsJsonArray("documents");
-                        
-                        for (JsonElement doc : documents){
-                            JsonObject fields = doc.getAsJsonObject().getAsJsonObject("fields");
-
-                            String fullPath = doc.getAsJsonObject().get("name").getAsString();
-                            String id = fullPath.substring(fullPath.lastIndexOf("/") + 1);
-                            String userName = getField(fields, "name");
-                            String userRole = getField(fields, "role");
-
-                            if (userName.equals("ADMIN")){
-                                continue;
-                            }
-
-                            UserRole user = new UserRole(id, userName, userRole);
-                            users.add(user);
-                        }
-                    }
-                }
+                List<UserRole> users = as.getUserRole();
                 Platform.runLater(()-> {
                     roleList.getItems().setAll(users);
                 });
@@ -227,12 +162,5 @@ public class userrolepage extends Application{
                 e.printStackTrace();
             }
         }).start();
-    }
-
-    private String getField(JsonObject fields, String key){
-        if (fields.has(key)){
-            return fields.getAsJsonObject(key).get("stringValue").getAsString();
-        }
-        return "";
     }
 }

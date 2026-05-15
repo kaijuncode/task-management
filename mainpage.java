@@ -105,6 +105,7 @@ public class mainpage extends Application{
             }
         });
 
+        //Product List Page
         productpage productPage = new productpage();
         product.setOnAction(e-> {
             if (productStage == null || !productStage.isShowing()){

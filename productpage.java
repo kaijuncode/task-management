@@ -5,28 +5,22 @@ import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.stage.Stage;
-
-import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
 import java.util.*;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
-
 public class productpage extends Application{
+    private ListView<Product> productListRef;
+    private Stage createStage;
     @Override
     public void start(Stage stage){
         BorderPane productPane = new BorderPane();
 
-        ListView<Product> productList = new ListView<>();
-        productList.setSelectionModel(null);
-        productList.setFocusTraversable(false);
+        //Center Area - Product List
+        ListView<Product> productListing = new ListView<>();
+        productListing.setSelectionModel(null);
+        productListing.setFocusTraversable(false);
+        productListRef = productListing;
 
-        productList.setCellFactory(param -> new ListCell<Product>(){
+        productListing.setCellFactory(param -> new ListCell<Product>(){
             @Override
             protected void updateItem(Product product, boolean empty){
                 super.updateItem(product, empty);
@@ -40,6 +34,7 @@ public class productpage extends Application{
                     card.setHgap(10);
                     card.setVgap(5);
                     card.setPadding(new Insets(10));
+                    card.setAlignment(Pos.CENTER);
 
                     card.setStyle(
                         "-fx-background-color: #f7f7f7;"+
@@ -50,62 +45,50 @@ public class productpage extends Application{
 
                     Label productLabel = new Label(product.getProductName());
                     HBox productBox = new HBox();
-                    productBox.setPrefWidth(80);
                     productBox.setAlignment(Pos.CENTER);
                     productBox.getChildren().addAll(productLabel);
 
                     card.add(productBox, 0, 0);
+                    setGraphic(card);
 
                 }
             }
-
         });
-        loadProduct(productList);
+        loadProduct(productListing);
 
-        productPane.setCenter(productList);
-        Scene scene = new Scene(productPane, 300, 200);
+        //Bottom Area - Add New Product
+        GridPane bottom = new GridPane();
+        bottom.setPadding(new Insets(5));
+        bottom.setAlignment(Pos.CENTER);
+
+        Button addBtn = new Button("Add New Product");
+        bottom.add(addBtn, 0, 0);
+
+        addBtn.setOnAction(e-> {
+            if (UserSession.getInstance().getName().equalsIgnoreCase("ADMIN")){
+                createNewProduct();
+            }
+            else{
+                Alert warning = new Alert(Alert.AlertType.WARNING);
+                warning.setHeaderText("Access Denied");
+                warning.setContentText("Need ADMIN-ACCESS.");
+                warning.showAndWait();
+            }
+        });
+
+        productPane.setCenter(productListing);
+        productPane.setBottom(bottom);
+        Scene scene = new Scene(productPane, 250, 200);
         stage.setTitle("Product List");
         stage.setScene(scene);
         stage.show();
     }
 
     public void loadProduct(ListView<Product> productList){
+        AdministrationService as = new AdministrationService();
         new Thread(()->{
             try{
-                String projectId = "task-management-86056";
-                String idToken = UserSession.getInstance().getidToken();
-
-                String url = "https://firestore.googleapis.com/v1/projects/" + projectId + "/databases/(default)/documents/products";
-
-                HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(url))
-                    .header("Authorization", "Bearer " + idToken)
-                    .GET()
-                    .build();
-
-                HttpClient client = HttpClient.newHttpClient();
-                HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-
-                List<Product> products = new ArrayList<>();
-
-                if (response.statusCode() == 200){
-                    JsonObject root = JsonParser.parseString(response.body()).getAsJsonObject();
-
-                    if (root.has("documents")){
-                        JsonArray documents = root.getAsJsonArray("documents");
-                        
-                        for (JsonElement doc : documents){
-                            JsonObject fields = doc.getAsJsonObject().getAsJsonObject("fields");
-
-                            String fullPath = doc.getAsJsonObject().get("name").getAsString();
-                            String id = fullPath.substring(fullPath.lastIndexOf("/") + 1);
-                            String productName = getField(fields, "name");
-
-                            Product product = new Product(id, productName);
-                            products.add(product);
-                        }
-                    }
-                }
+                List<Product> products = as.getProduct();
                 Platform.runLater(()-> {
                     productList.getItems().setAll(products);
                 });
@@ -115,10 +98,65 @@ public class productpage extends Application{
         }).start();
     }
 
-    private String getField(JsonObject fields, String key){
-        if (fields.has(key)){
-            return fields.getAsJsonObject(key).get("stringValue").getAsString();
-        }
-        return "";
+    public void createNewProduct(){
+        AdministrationService as = new AdministrationService();
+        createStage = new Stage();
+
+        VBox createBox = new VBox(5);
+        createBox.setAlignment(Pos.CENTER_LEFT);
+        createBox.setPadding(new Insets(10));
+
+        Label createLabel = new Label("Product Name:");
+        TextField createText = new TextField();
+        Button createBtn = new Button("Add");
+        createBtn.setOnAction(e->{
+            Alert createAlert = new Alert(Alert.AlertType.CONFIRMATION);
+            createAlert.setHeaderText("Add New Product");
+            createAlert.setContentText("Confirm Add New Product: '" + createText.getText() + "'?");
+            Optional<ButtonType> result = createAlert.showAndWait();
+            
+            if (result.isPresent() && result.get() == ButtonType.OK){
+                new Thread(()->{
+                    try{
+                        String newProduct = createText.getText().trim();
+                        if (newProduct.isEmpty()){
+                            Platform.runLater(()->{
+                                Alert empty = new Alert(Alert.AlertType.WARNING);
+                                empty.setHeaderText("Cannot Empty");
+                                empty.setContentText("Pls enter the product you want to add!");
+                                empty.showAndWait();
+                            });
+                            return;
+                        }
+                        if (as.productExists(newProduct)){
+                            Platform.runLater(()->{
+                                Alert empty = new Alert(Alert.AlertType.WARNING);
+                                empty.setHeaderText("Product Exist");
+                                empty.setContentText("This product already exist!");
+                                empty.showAndWait();
+                            });
+                            return;
+                        }
+                        as.addProduct(newProduct);
+                        Platform.runLater(()->{
+                            createStage.close();
+                            refreshProduct();
+                        });
+                    } catch(Exception ex){
+                        ex.printStackTrace();
+                    }
+                }).start();
+            }
+        });
+        createBox.getChildren().addAll(createLabel, createText, createBtn);
+
+        Scene scene = new Scene(createBox, 250, 100);
+        createStage.setTitle("Add Product");
+        createStage.setScene(scene);
+        createStage.show();
+    }
+
+    public void refreshProduct(){
+        loadProduct(productListRef);
     }
 }

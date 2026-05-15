@@ -41,8 +41,9 @@ public class posttaskpage extends Application {
 
         //Software
         gridpane.add(new Label("Software:"), 0, 3);
-        TextField Software = new TextField();
-        gridpane.add(Software, 1, 3);
+        ComboBox<Product> productList = new ComboBox<>();
+        loadProduct(productList);
+        gridpane.add(productList, 1, 3);
 
         //Issue/Request
         gridpane.add(new Label("Issue/Request:"), 0, 4);
@@ -124,7 +125,8 @@ public class posttaskpage extends Application {
             String company = cmyName.getText();
             String customer = Name.getText();
             String contact = Contact.getText();
-            String software = Software.getText();
+            Product selectedProduct = productList.getValue();
+            String software = selectedProduct.getProductName();
             String issue = IssueReq.getText();
             String postBy = Post.getText();
             String assignedTo = userList.getValue();
@@ -144,7 +146,7 @@ public class posttaskpage extends Application {
                         cmyName.clear();
                         Name.clear();
                         Contact.clear();
-                        Software.clear();
+                        productList.getSelectionModel().selectFirst();
                         IssueReq.clear();
                         userList.getSelectionModel().selectFirst();
                         hotline.setSelected(true);
@@ -188,6 +190,21 @@ public class posttaskpage extends Application {
                 });
             } catch (Exception e){
                 e.printStackTrace();
+            }
+        }).start();
+    }
+
+    public void loadProduct(ComboBox<Product> productList){
+        AdministrationService as = new AdministrationService();
+        new Thread(()->{
+            try{
+                List<Product> products = as.getProduct();
+                Platform.runLater(()->{
+                    productList.getItems().setAll(products);
+                    productList.getSelectionModel().selectFirst();
+                });
+            } catch (Exception ex){
+                ex.printStackTrace();
             }
         }).start();
     }

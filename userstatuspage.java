@@ -1,8 +1,4 @@
-import java.net.URI;
-import java.net.http.*;
 import java.util.*;
-import com.google.gson.*;
-
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.geometry.Insets;
@@ -164,38 +160,14 @@ public class userstatuspage extends Application{
     }
 
     public void editStatus(User user, String newStatus, Stage window){
+        AdministrationService as = new AdministrationService();
         new Thread(()->{
             try{
-                String projectID = "task-management-86056";
-                String idToken = UserSession.getInstance().getidToken();
-
-                String url = "https://firestore.googleapis.com/v1/projects/"
-                        + projectID + "/databases/(default)/documents/users/" + user.getId()
-                        + "?updateMask.fieldPaths=status"; 
-
-                String json = "{ \"fields\": { " +
-                        "\"status\": { \"stringValue\": \"" + newStatus + "\" } " +
-                        "} }";
-
-                HttpRequest request = HttpRequest.newBuilder()
-                        .uri(URI.create(url))
-                        .method("PATCH", HttpRequest.BodyPublishers.ofString(json))
-                        .header("Content-Type", "application/json")
-                        .header("Authorization", "Bearer " + idToken)
-                        .build();
-
-                HttpClient client = HttpClient.newHttpClient();
-                HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-
-                if (response.statusCode() == 200){
-                    Platform.runLater(()-> {
-                        window.close();
-                        refreshStatus();
-                    });
-                }
-                else{
-                    System.out.println(response.body());
-                }
+                as.updateUserStatus(user, newStatus);
+                Platform.runLater(()-> {
+                    window.close();
+                    refreshStatus();
+                });
             } catch (Exception e){
                 e.printStackTrace();
             }
@@ -207,79 +179,10 @@ public class userstatuspage extends Application{
     }
 
     public void loadUserStatus(ListView<User> statusList){
+        AdministrationService as = new AdministrationService();
         new Thread(() ->{
             try{
-                String projectId = "task-management-86056";
-                String idToken = UserSession.getInstance().getidToken();
-
-                String url = "https://firestore.googleapis.com/v1/projects/" + projectId + "/databases/(default)/documents/users";
-
-                HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(url))
-                    .header("Authorization", "Bearer " + idToken)
-                    .GET()
-                    .build();
-
-                HttpClient client = HttpClient.newHttpClient();
-                HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-
-                List<User> users = new ArrayList<>();
-
-                String taskUrl = "https://firestore.googleapis.com/v1/projects/" + projectId + "/databases/(default)/documents/tasks";
-                HttpRequest taskRequest = HttpRequest.newBuilder()
-                    .uri(URI.create(taskUrl))
-                    .header("Authorization", "Bearer " + idToken)
-                    .GET()
-                    .build();
-
-                HttpClient taskClient = HttpClient.newHttpClient();
-                HttpResponse<String> taskResponse = taskClient.send(taskRequest, HttpResponse.BodyHandlers.ofString());
-
-                Map<String, Integer> pendingMap = new HashMap<>();
-
-                if (taskResponse.statusCode() == 200){
-                    JsonObject taskRoot = JsonParser.parseString(taskResponse.body()).getAsJsonObject();
-
-                    if (taskRoot.has("documents")){
-                        JsonArray taskDocuments = taskRoot.getAsJsonArray("documents");
-
-                        for(JsonElement doc : taskDocuments){
-                            JsonObject taskFields = doc.getAsJsonObject().getAsJsonObject("fields");
-
-                            String assignedTo = getField(taskFields, "assignedTo");
-                            String status = getField(taskFields, "status");
-
-                            if (!status.equalsIgnoreCase("Complete") && !assignedTo.equalsIgnoreCase("Everyone")){
-                                pendingMap.put(assignedTo, pendingMap.getOrDefault(assignedTo, 0) + 1);
-                            }
-                        }
-                    }
-                }
-
-                if (response.statusCode() == 200){
-                    JsonObject root = JsonParser.parseString(response.body()).getAsJsonObject();
-
-                    if (root.has("documents")){
-                        JsonArray documents = root.getAsJsonArray("documents");
-                        
-                        for (JsonElement doc : documents){
-                            JsonObject fields = doc.getAsJsonObject().getAsJsonObject("fields");
-
-                            String fullPath = doc.getAsJsonObject().get("name").getAsString();
-                            String id = fullPath.substring(fullPath.lastIndexOf("/") + 1);
-                            String userName = getField(fields, "name");
-                            String userStatus = getField(fields, "status");
-
-                            if (userName.equals("ADMIN")){
-                                continue;
-                            }
-
-                            User user = new User(id, userName, userStatus);
-                            user.setPendingCount(pendingMap.getOrDefault(userName, 0));
-                            users.add(user);
-                        }
-                    }
-                }
+                List<User> users = as.getUserStatus();
                 Platform.runLater(()-> {
                     statusList.getItems().setAll(users);
                 });
@@ -287,12 +190,5 @@ public class userstatuspage extends Application{
                 e.printStackTrace();
             }
         }).start();
-    }
-
-    private String getField(JsonObject fields, String key){
-        if (fields.has(key)){
-            return fields.getAsJsonObject(key).get("stringValue").getAsString();
-        }
-        return "";
     }
 }
