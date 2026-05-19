@@ -12,7 +12,8 @@ import javafx.stage.Stage;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 
-public class userstatuspage extends Application{
+public class PageUserstatus extends Application{
+    private final ServiceAdministration as = new ServiceAdministration();
     private ListView<User> statusListRef;
     private Stage statusStage;
     @Override
@@ -160,7 +161,6 @@ public class userstatuspage extends Application{
     }
 
     public void editStatus(User user, String newStatus, Stage window){
-        AdministrationService as = new AdministrationService();
         new Thread(()->{
             try{
                 as.updateUserStatus(user, newStatus);
@@ -179,7 +179,6 @@ public class userstatuspage extends Application{
     }
 
     public void loadUserStatus(ListView<User> statusList){
-        AdministrationService as = new AdministrationService();
         new Thread(() ->{
             try{
                 List<User> users = as.getUserStatus();

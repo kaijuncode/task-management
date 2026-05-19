@@ -9,7 +9,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
-public class TaskService {
+public class ServiceTask {
     private final String projectId = "task-management-86056";
 
     //Get Lastest Update of TASK
@@ -162,6 +162,29 @@ public class TaskService {
             .header("Authorization", "Bearer " + idToken)
             .build();
 
+        HttpClient client = HttpClient.newHttpClient();
+        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+
+        System.out.println(response.body());
+    }
+
+    //Change Ticket Status to Follow Up
+    public void ticketStatus(Task task) throws Exception{
+        String idToken = UserSession.getInstance().getidToken();
+
+        String url = "https://firestore.googleapis.com/v1/projects/" + projectId + "/databases/(default)/documents/tasks/" + task.getId() + "?updateMask.fieldPaths=progress";
+    
+        String json = "{ \"fields\": { " +
+            "\"progress\": { \"stringValue\": \"FollowUp\" } " +
+            "} }";
+
+        HttpRequest request = HttpRequest.newBuilder()
+            .uri(URI.create(url))
+            .method("PATCH", HttpRequest.BodyPublishers.ofString(json))
+            .header("Content-Type", "application/json")
+            .header("Authorization", "Bearer " + idToken)
+            .build();
+        
         HttpClient client = HttpClient.newHttpClient();
         HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
 

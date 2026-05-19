@@ -14,7 +14,7 @@ import java.net.http.HttpResponse;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
-public class loginpage extends Application{
+public class PageLogin extends Application{
     @Override
     public void start(Stage stage){
         GridPane loginpage = new GridPane();
@@ -24,7 +24,7 @@ public class loginpage extends Application{
 
         //Username Input
         loginpage.add(new Label("Email:"), 0, 0);
-        TextField usernameInt = new TextField("kaijun@gmail.com");
+        TextField usernameInt = new TextField("");
         loginpage.add(usernameInt, 1, 0);
 
         //Password Input
@@ -44,9 +44,9 @@ public class loginpage extends Application{
 
             new Thread(() ->{
                 try{
-                    FirebaseAuthService auth = new FirebaseAuthService();
+                    ServiceFirebaseAuth auth = new ServiceFirebaseAuth();
                     AuthResult result = auth.login(email, password);
-                    ProfileService ps = new ProfileService();
+                    ServiceProfile ps = new ServiceProfile();
 
                     String name = null;
                     String status = null;
@@ -78,7 +78,7 @@ public class loginpage extends Application{
                         session.setRole(role);
                         Platform.runLater(() ->{
                             stage.close();
-                            mainpage otherPage = new mainpage();
+                            PageMain otherPage = new PageMain();
                             Stage newStage = new Stage();
                             otherPage.start(newStage);
                         });
@@ -165,7 +165,7 @@ public class loginpage extends Application{
                     Platform.runLater(() ->{
                         stage.close();
 
-                        mainpage otherPage = new mainpage();
+                        PageMain otherPage = new PageMain();
                         Stage main = new Stage();
                         otherPage.start(main);
                     });

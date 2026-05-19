@@ -10,7 +10,8 @@ import javafx.stage.Stage;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 
-public class userrolepage extends Application{
+public class PageUserrole extends Application{
+    private final ServiceAdministration as = new ServiceAdministration();
     private ListView<UserRole> roleListRef;
     private Stage userRoleStage;
     @Override
@@ -132,7 +133,6 @@ public class userrolepage extends Application{
     }
 
     public void editRole(UserRole userRole, String newRole, Stage window){
-        AdministrationService as = new AdministrationService();
         new Thread(()->{
             try{
                 as.updateUserRole(userRole, newRole);
@@ -151,7 +151,6 @@ public class userrolepage extends Application{
     }
 
     public void loadUserRole(ListView<UserRole> roleList){
-        AdministrationService as = new AdministrationService();
         new Thread(() ->{
             try{
                 List<UserRole> users = as.getUserRole();

@@ -16,7 +16,7 @@ class AuthResult{
             this.email = email;
     }
 }
-public class FirebaseAuthService {
+public class ServiceFirebaseAuth {
     private static final String API_KEY = "AIzaSyCF5p3akP5tDysrpnrYzUaU1tU_vQ-t91U";
     private static final String AUTH_URL = "https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=" + API_KEY; 
 

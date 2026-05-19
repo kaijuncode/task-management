@@ -6,7 +6,7 @@ import java.net.http.HttpResponse;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
-public class ProfileService {
+public class ServiceProfile {
     public boolean checkUserProfile(String uid, String idToken) throws Exception {
         String projectId = "task-management-86056";
 

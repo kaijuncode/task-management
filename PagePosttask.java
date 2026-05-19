@@ -15,7 +15,9 @@ import javafx.scene.control.*;
 import javafx.stage.Stage;
 import javafx.scene.layout.*;
 
-public class posttaskpage extends Application {
+public class PagePosttask extends Application {
+    private final ServiceAdministration as = new ServiceAdministration();
+    private final ServiceTask ts = new ServiceTask();
     private boolean Urgent = false;
     @Override
     public void start(Stage stage) {
@@ -139,7 +141,6 @@ public class posttaskpage extends Application {
             new Thread(() ->{
                 try{
                     //Post Task to Firestore
-                    TaskService ts = new TaskService();
                     ts.createTask(company,customer,contact,software,issue,postBy,assignedTo,method,emailVal,Urgent,createTime,status,progress);
                     ts.updateLastUpdated();
                     Platform.runLater(() ->{
@@ -172,7 +173,7 @@ public class posttaskpage extends Application {
             }).start();
         });
 
-        Scene scene = new Scene(gridpane, 600, 300);
+        Scene scene = new Scene(gridpane, 650, 300);
         stage.setTitle("Add Task");
         stage.setScene(scene);
         stage.show();
@@ -182,7 +183,6 @@ public class posttaskpage extends Application {
     public void loadUsersfromFirebase(ComboBox<String> userList){
         new Thread(() ->{
             try{
-                TaskService ts = new TaskService();
                 List<String> users = ts.getUserList();
                 Platform.runLater(() -> {
                     userList.getItems().addAll(users);
@@ -195,7 +195,6 @@ public class posttaskpage extends Application {
     }
 
     public void loadProduct(ComboBox<Product> productList){
-        AdministrationService as = new AdministrationService();
         new Thread(()->{
             try{
                 List<Product> products = as.getProduct();

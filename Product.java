@@ -14,4 +14,9 @@ public class Product {
     public String getProductName(){
         return productName;
     }
+
+    @Override
+    public String toString(){
+        return productName;
+    }
 }

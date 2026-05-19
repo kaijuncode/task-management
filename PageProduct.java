@@ -7,7 +7,8 @@ import javafx.scene.layout.*;
 import javafx.stage.Stage;
 import java.util.*;
 
-public class productpage extends Application{
+public class PageProduct extends Application{
+    private final ServiceAdministration as = new ServiceAdministration();
     private ListView<Product> productListRef;
     private Stage createStage;
     @Override
@@ -85,7 +86,6 @@ public class productpage extends Application{
     }
 
     public void loadProduct(ListView<Product> productList){
-        AdministrationService as = new AdministrationService();
         new Thread(()->{
             try{
                 List<Product> products = as.getProduct();
@@ -99,7 +99,6 @@ public class productpage extends Application{
     }
 
     public void createNewProduct(){
-        AdministrationService as = new AdministrationService();
         createStage = new Stage();
 
         VBox createBox = new VBox(5);
@@ -110,43 +109,51 @@ public class productpage extends Application{
         TextField createText = new TextField();
         Button createBtn = new Button("Add");
         createBtn.setOnAction(e->{
-            Alert createAlert = new Alert(Alert.AlertType.CONFIRMATION);
-            createAlert.setHeaderText("Add New Product");
-            createAlert.setContentText("Confirm Add New Product: '" + createText.getText() + "'?");
-            Optional<ButtonType> result = createAlert.showAndWait();
-            
-            if (result.isPresent() && result.get() == ButtonType.OK){
-                new Thread(()->{
-                    try{
-                        String newProduct = createText.getText().trim();
-                        if (newProduct.isEmpty()){
-                            Platform.runLater(()->{
-                                Alert empty = new Alert(Alert.AlertType.WARNING);
-                                empty.setHeaderText("Cannot Empty");
-                                empty.setContentText("Pls enter the product you want to add!");
-                                empty.showAndWait();
-                            });
-                            return;
-                        }
-                        if (as.productExists(newProduct)){
-                            Platform.runLater(()->{
-                                Alert empty = new Alert(Alert.AlertType.WARNING);
-                                empty.setHeaderText("Product Exist");
-                                empty.setContentText("This product already exist!");
-                                empty.showAndWait();
-                            });
-                            return;
-                        }
-                        as.addProduct(newProduct);
+            String newProduct = createText.getText().replaceAll("\\s", "");
+            new Thread(()->{
+                try{
+                    //Detect Empty TextField
+                    if (newProduct.isEmpty()){
                         Platform.runLater(()->{
-                            createStage.close();
-                            refreshProduct();
+                            Alert empty = new Alert(Alert.AlertType.WARNING);
+                            empty.setHeaderText("Cannot Empty");
+                            empty.setContentText("Pls enter the product you want to add!");
+                            empty.showAndWait();
                         });
-                    } catch(Exception ex){
-                        ex.printStackTrace();
+                        return;
                     }
-                }).start();
-            }
+                    //Detect Product Existing
+                    if (as.productExists(newProduct)){
+                        Platform.runLater(()->{
+                            Alert exist = new Alert(Alert.AlertType.WARNING);
+                            exist.setHeaderText("Product Exist");
+                            exist.setContentText("This product already exist!");
+                            exist.showAndWait();
+                        });
+                        return;
+                    }
+                    //Add Product
+                    Platform.runLater(()->{
+                        Alert createAlert = new Alert(Alert.AlertType.CONFIRMATION);
+                        createAlert.setHeaderText("Add New Product");
+                        createAlert.setContentText("Confirm Add New Product: '" + newProduct + "'?");
+                        Optional<ButtonType> result = createAlert.showAndWait();
+                        if (result.isPresent() && result.get() == ButtonType.OK){
+                            try{
+                                as.addProduct(newProduct);
+                                Platform.runLater(()->{
+                                    createStage.close();
+                                    refreshProduct();
+                                });
+                            } catch(Exception ex){
+                                ex.printStackTrace();
+                            }
+                        }
+                    });
+                } catch(Exception ex){
+                    ex.printStackTrace();
+                }
+            }).start();
         });
         createBox.getChildren().addAll(createLabel, createText, createBtn);
 

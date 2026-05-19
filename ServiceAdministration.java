@@ -9,14 +9,16 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
-public class AdministrationService {
+public class ServiceAdministration {
     private final String projectId = "task-management-86056";
 
+    //Existing Product (Product Page)
     public boolean productExists(String productName) throws Exception{
         List<Product> productExistList = getProduct();
 
         for (Product product : productExistList){
-            if (product.getProductName().equalsIgnoreCase(productName)){
+            String cleanProductName = product.getProductName().replaceAll("\\s", "");
+            if (cleanProductName.equalsIgnoreCase(productName)){
                 return true;
             }
         }
@@ -156,8 +158,8 @@ public class AdministrationService {
         HttpClient taskClient = HttpClient.newHttpClient();
         HttpResponse<String> taskResponse = taskClient.send(taskRequest, HttpResponse.BodyHandlers.ofString());
 
+        //Count Pending Task Amount
         Map<String, Integer> pendingMap = new HashMap<>();
-
         if (taskResponse.statusCode() == 200){
             JsonObject taskRoot = JsonParser.parseString(taskResponse.body()).getAsJsonObject();
 

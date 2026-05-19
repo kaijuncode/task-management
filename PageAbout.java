@@ -6,7 +6,7 @@ import javafx.scene.layout.*;
 import javafx.stage.Stage;
 import javafx.scene.layout.VBox;
 
-public class aboutpage extends Application{
+public class PageAbout extends Application{
     @Override
     public void start(Stage stage){
         GridPane aboutpage = new GridPane();

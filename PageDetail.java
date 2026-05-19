@@ -10,18 +10,17 @@ import javafx.scene.control.*;
 import javafx.stage.Stage;
 import javafx.scene.layout.*;
 
-public class detailpage extends Application{
+public class PageDetail extends Application{
+    private final ServiceTask ts = new ServiceTask();
     private Task task;
     private Stage transferStage;
     private Stage assignStage;
 
-    public detailpage(Task task){
+    public PageDetail(Task task){
         this.task = task;
     }
     @Override
     public void start(Stage stage){
-        TaskService ts = new TaskService();
-
         GridPane gridpane = new GridPane();
         gridpane.setHgap(10);
         gridpane.setVgap(10);
@@ -162,7 +161,7 @@ public class detailpage extends Application{
         );
         gridpane.add(createTime, 3, 4);
 
-        //Box for Accept and Assign Button
+        //Box for Accept & Assign Button
         HBox btnBox = new HBox(10);
 
         //Accept Task
@@ -204,7 +203,7 @@ public class detailpage extends Application{
         btnBox.getChildren().addAll(assign, accept);
         gridpane.add(btnBox, 1, 5);
 
-        //Box for Transder and Complete Task
+        //Box for Transfer & Follow Up & Complete Task
         HBox btnBox2 = new HBox(10);
 
         //Transfer Task
@@ -216,6 +215,28 @@ public class detailpage extends Application{
         transfer.setOnAction(e-> {
             stage.close();
             transferTask(task);
+        });
+
+        //Follow Up Task
+        Button flw = new Button("Follow Up");
+        flw.setVisible(false);
+        if (task.getAssignedTo().equals(UserSession.getInstance().getName()) && !task.getStatus().equalsIgnoreCase("Complete") && !task.getProgress().equalsIgnoreCase("FollowUp")) {
+            flw.setVisible(true);
+        }
+        flw.setOnAction(e-> {
+            Alert confirmFlw = new Alert(Alert.AlertType.CONFIRMATION);
+            confirmFlw.setHeaderText("Follow Up?");
+            confirmFlw.setContentText("Change ticket status to Follow Up?");
+            Optional<ButtonType> result = confirmFlw.showAndWait();
+            if (result.isPresent() && result.get() == ButtonType.OK){
+                try{
+                    ts.ticketStatus(task);
+                    ts.updateLastUpdated();
+                } catch (Exception ex){
+                    ex.printStackTrace();
+                }
+                stage.close();
+            }
         });
 
         //Complete Task
@@ -242,10 +263,10 @@ public class detailpage extends Application{
             }
         });
 
-        btnBox2.getChildren().addAll(done, transfer);
-        gridpane.add(btnBox2, 2, 5);
+        btnBox2.getChildren().addAll(done, transfer, flw);
+        gridpane.add(btnBox2, 2, 5, 2, 1);
 
-        Scene scene = new Scene(gridpane, 700, 300);
+        Scene scene = new Scene(gridpane, 650, 300);
         stage.setTitle("Detail");
         stage.setScene(scene);
         stage.show();
@@ -253,8 +274,7 @@ public class detailpage extends Application{
 
     //Assign Pending Task to Someone
     public void assignTask(Task task){
-        posttaskpage post = new posttaskpage();
-        TaskService ts = new TaskService();
+        PagePosttask post = new PagePosttask();
 
         assignStage = new Stage();
 
@@ -336,7 +356,6 @@ public class detailpage extends Application{
 
     //Transfer Task to Others
     public void transferTask(Task task){
-        TaskService ts = new TaskService();
         transferStage = new Stage();
 
         transferStage.setOnCloseRequest(e-> {
@@ -411,7 +430,6 @@ public class detailpage extends Application{
     public void loadUserForTransfer(ComboBox<String> userList){
         new Thread(()-> {
             try{
-                TaskService ts = new TaskService();
                 List<String> userName = ts.getDetailUserList();
                 Platform.runLater(() -> {
                     userList.getItems().addAll(userName);

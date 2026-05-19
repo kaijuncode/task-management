@@ -16,7 +16,7 @@ import javafx.scene.text.Font;
 import javafx.stage.Stage;
 import javafx.stage.Window;
 
-public class mainpage extends Application{ 
+public class PageMain extends Application{ 
     private String lastUpdatedCache = "";
     private Filtermode currentMode = Filtermode.ALL;
     private Stage postStage;
@@ -25,7 +25,8 @@ public class mainpage extends Application{
     private Stage aboutStage;
     private Stage updateStatusStage;
     private Stage productStage;
-    TaskService ts = new TaskService();
+    private final ServiceTask ts = new ServiceTask();
+    private final ServiceProfile ps = new ServiceProfile();
 
     enum Filtermode{
         ALL,
@@ -61,7 +62,7 @@ public class mainpage extends Application{
         menu.getMenus().addAll(taskMenu, adminMenu, helpMenu);
 
         //Post Task Page
-        posttaskpage posttaskPage = new posttaskpage();
+        PagePosttask posttaskPage = new PagePosttask();
         post.setOnAction(e ->{
             if (postStage == null || !postStage.isShowing()){
                 postStage = new Stage();
@@ -76,7 +77,7 @@ public class mainpage extends Application{
         });
 
         //User Status Page
-        userstatuspage userstatusPage = new userstatuspage();
+        PageUserstatus userstatusPage = new PageUserstatus();
         status.setOnAction(e-> {
             if (userStatusStage == null || !userStatusStage.isShowing()){
                 userStatusStage = new Stage();
@@ -91,7 +92,7 @@ public class mainpage extends Application{
         });
 
         //User Role Page
-        userrolepage userrolePage = new userrolepage();
+        PageUserrole userrolePage = new PageUserrole();
         role.setOnAction(e-> {
             if (userRoleStage == null || !userRoleStage.isShowing()){
                 userRoleStage = new Stage();
@@ -106,7 +107,7 @@ public class mainpage extends Application{
         });
 
         //Product List Page
-        productpage productPage = new productpage();
+        PageProduct productPage = new PageProduct();
         product.setOnAction(e-> {
             if (productStage == null || !productStage.isShowing()){
                 productStage = new Stage();
@@ -121,7 +122,7 @@ public class mainpage extends Application{
         });
 
         //About Page
-        aboutpage aboutPage = new aboutpage(); 
+        PageAbout aboutPage = new PageAbout(); 
         about.setOnAction(e ->{
             if (aboutStage == null || !aboutStage.isShowing()){
                 aboutStage = new Stage();
@@ -136,7 +137,7 @@ public class mainpage extends Application{
         });
 
         //Logout
-        loginpage loginPage = new loginpage();
+        PageLogin loginPage = new PageLogin();
         logout.setOnAction(e ->{
             Alert LOGOUT = new Alert(Alert.AlertType.CONFIRMATION);
             LOGOUT.setTitle("LOGOUT");
@@ -274,7 +275,7 @@ public class mainpage extends Application{
 
                     //See Task Detail
                     setOnMouseClicked(e-> {
-                        new detailpage(task).start(new Stage());
+                        new PageDetail(task).start(new Stage());
                     });
                 }
             }
@@ -369,7 +370,6 @@ public class mainpage extends Application{
                 new Thread(() -> {
                     try{
                         UserSession session = UserSession.getInstance();
-                        ProfileService ps = new ProfileService();
 
                         String userStatus = ps.getProfileStatus(session.getUid(), session.getidToken());
 
@@ -482,7 +482,6 @@ public class mainpage extends Application{
         new Thread(() ->{
             try{
                 //Task Service - Get Task
-                TaskService ts = new TaskService();
                 List<Task> tasks = ts.getTasks();
                 List<Task> filterTasks = new ArrayList<>();
 
@@ -577,7 +576,6 @@ public class mainpage extends Application{
         new Thread(() ->{
             try{
                 UserSession session = UserSession.getInstance();
-                ProfileService ps = new ProfileService();
 
                 ps.updateStatus(
                     session.getUid(),
